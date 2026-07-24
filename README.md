@@ -38,7 +38,7 @@ Generated:
   waslpay-integration.ts
 ```
 
-La CLI génère les variables d'environnement nécessaires et un exemple d'initialisation avec une route webhook adaptée au framework sélectionné..
+La CLI génère les variables d'environnement nécessaires et un exemple d'initialisation avec une route webhook adaptée au framework sélectionné.
 
 ## Matrice de compatibilité
 
