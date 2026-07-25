@@ -3,6 +3,12 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.4 — 2026-07-25
+
+### Fixed
+
+- **CLI**: Python and PHP generated boilerplates failed at runtime with TypeError (missing HTTP client argument) despite being syntactically valid -- found via a real blind end-to-end test with FastAPI. Also aligned the default webhook route across all 3 languages to match `waslpay dev`'s default target (`/api/webhooks/waslpay`). Added real instantiation tests (not just syntax checks) for all 3 languages.
+
 ## 3.0.3 — 2026-07-25
 
 ### Fixed
