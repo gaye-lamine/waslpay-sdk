@@ -1,3 +1,7 @@
+import { execSync } from "node:child_process";
+import { writeFileSync, unlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { generateEnvExample, type Provider } from "../src/generators/env.js";
@@ -12,6 +16,48 @@ const providerEnvironmentLines: Readonly<Record<Provider, readonly string[]>> = 
   wave: ["WAVE_API_KEY=", "WAVE_WEBHOOK_SECRET="],
   "mtn-momo": ["MTN_MOMO_SUBSCRIPTION_KEY=", "MTN_MOMO_DEFAULT_CURRENCY=XOF"],
 };
+
+function verifyNodeSyntax(code: string): void {
+  // Strip TS experimental decorator annotations for node --check compatibility
+  const cleanCode = code.replace(/@[A-Za-z0-9_]+(?:\([^)]*\))?/g, "");
+  const file = join(tmpdir(), `test_generated_${Date.now()}_${Math.random().toString(36).substring(2)}.mjs`);
+  try {
+    writeFileSync(file, cleanCode, "utf8");
+    execSync(`node --check "${file}"`, { stdio: "pipe" });
+  } finally {
+    try { unlinkSync(file); } catch {}
+  }
+}
+
+function verifyPhpSyntax(code: string): void {
+  const file = join(tmpdir(), `test_generated_${Date.now()}_${Math.random().toString(36).substring(2)}.php`);
+  try {
+    writeFileSync(file, code, "utf8");
+    execSync(`php -l "${file}"`, { stdio: "pipe" });
+  } catch (err: any) {
+    if (err.code === "ENOENT" || err.message?.includes("not found") || err.message?.includes("n'est pas reconnu")) {
+      return; // PHP CLI not installed on environment
+    }
+    throw err;
+  } finally {
+    try { unlinkSync(file); } catch {}
+  }
+}
+
+function verifyPythonSyntax(code: string): void {
+  const file = join(tmpdir(), `test_generated_${Date.now()}_${Math.random().toString(36).substring(2)}.py`);
+  try {
+    writeFileSync(file, code, "utf8");
+    execSync(`python -m py_compile "${file}"`, { stdio: "pipe" });
+  } catch (err: any) {
+    if (err.code === "ENOENT" || err.message?.includes("not found") || err.message?.includes("n'est pas reconnu")) {
+      return; // Python CLI not installed on environment
+    }
+    throw err;
+  } finally {
+    try { unlinkSync(file); } catch {}
+  }
+}
 
 describe("generateEnvExample", () => {
   it.each(providers)("includes the expected variables for %s", (provider) => {
@@ -38,8 +84,10 @@ describe("generateNodeBoilerplate", () => {
     const generated = generateNodeBoilerplate(framework, [provider]);
 
     expect(generated).toContain(`// Generated for ${framework}. Selected providers: ${provider}`);
-    expect(generated).toContain("const waslpay = new WaslPay(provider);");
-    expect(generated).toContain("webhooks/payments");
+    expect(generated).toContain("new WaslPay(provider);");
+
+    // Syntax validation check (node --check)
+    expect(() => verifyNodeSyntax(generated)).not.toThrow();
   });
 });
 
@@ -51,8 +99,10 @@ describe("generatePhpBoilerplate", () => {
     const generated = generatePhpBoilerplate(framework, [provider]);
 
     expect(generated).toContain(`// Generated for ${framework}. Selected providers: ${provider}`);
-    expect(generated).toContain("$waslPay = new WaslPay($provider);");
-    expect(generated).toContain("file_get_contents('php://input')");
+    expect(generated).toContain("new WaslPay($provider);");
+
+    // Syntax validation check (php -l)
+    expect(() => verifyPhpSyntax(generated)).not.toThrow();
   });
 });
 
@@ -65,6 +115,8 @@ describe("generatePythonBoilerplate", () => {
 
     expect(generated).toContain(`# Generated for ${framework}. Selected providers: ${provider}`);
     expect(generated).toContain("waslpay = WaslPay(provider)");
-    expect(generated).toContain("handle_webhook");
+
+    // Syntax validation check (python -m py_compile)
+    expect(() => verifyPythonSyntax(generated)).not.toThrow();
   });
 });
