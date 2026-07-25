@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "waslpay-sdk"
-version = "3.0.2"
+version = "3.0.3"
 description = "Unified West African mobile-money payment SDK."
 authors = ["WaslPay Contributors"]
 homepage = "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-python"

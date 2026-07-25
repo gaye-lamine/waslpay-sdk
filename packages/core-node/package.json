@@ -1,6 +1,6 @@
 {
   "name": "@waslpay/core-node",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "type": "module",
   "homepage": "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-node",
   "repository": {

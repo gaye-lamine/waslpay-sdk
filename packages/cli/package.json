@@ -1,6 +1,6 @@
 {
   "name": "@waslpay/cli",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Interactive WaslPay integration generator.",
   "type": "module",
   "bin": {

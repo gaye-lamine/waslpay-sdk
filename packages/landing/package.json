@@ -1,6 +1,6 @@
 {
   "name": "@waslpay/landing",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "private": true,
   "description": "Official WaslPay SDK landing page.",
   "scripts": {

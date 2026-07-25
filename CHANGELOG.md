@@ -3,6 +3,12 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.3 — 2026-07-25
+
+### Fixed
+
+- **CLI**: generated boilerplates (Node, PHP, Python) were syntactically invalid and could not run -- discovered via a real blind end-to-end test with FastAPI. All generators now produce executable code, verified by `py_compile`, `node --check`, and `php -l`.
+
 ## 3.0.2 — 2026-07-24
 
 ### Renaming, Rebranding & Versioning
