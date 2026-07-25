@@ -61,7 +61,7 @@ fastify.post('/checkout', async (request, reply) => {
   return session;
 });
 
-fastify.post('/webhooks/payments', async (request, reply) => {
+fastify.post('/api/webhooks/waslpay', async (request, reply) => {
   const rawBody = request.rawBody || request.body;
   const event = await waslpay.handleWebhook(rawBody, request.headers);
   return { eventId: event.id };
@@ -87,7 +87,7 @@ import { WaslPay, ${importClass} } from '@waslpay/core-node';
 ${code}
 const waslpay = new WaslPay(provider);
 
-@Controller('payments')
+@Controller('api/webhooks')
 export class PaymentController {
   @Post('checkout')
   async createCheckout() {
@@ -99,7 +99,7 @@ export class PaymentController {
     });
   }
 
-  @Post('webhooks')
+  @Post('waslpay')
   async handleWebhook(@Req() req, @Res() res) {
     const event = await waslpay.handleWebhook(req.body, req.headers);
     return res.status(HttpStatus.OK).json({ eventId: event.id });
@@ -132,7 +132,7 @@ app.post('/checkout', async (req, res) => {
   }
 });
 
-app.post('/webhooks/payments', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/api/webhooks/waslpay', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
     const event = await waslpay.handleWebhook(req.body, req.headers);
     res.json({ eventId: event.id });

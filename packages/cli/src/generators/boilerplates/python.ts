@@ -7,16 +7,25 @@ function getProviderCodePython(provider: Provider): { importStmt: string; code: 
     case "orange-money":
       return {
         importStmt: "from waslpay.providers.orange_money import OrangeMoneyProvider",
-        code: `provider = OrangeMoneyProvider(
-    auth_header=os.environ.get("ORANGE_MONEY_AUTH_HEADER", ""),
-    merchant_key=os.environ.get("ORANGE_MONEY_MERCHANT_KEY", ""),
+        code: `client = httpx.AsyncClient()
+provider = OrangeMoneyProvider(
+    client,
+    client_id=os.environ.get("ORANGE_MONEY_CLIENT_ID", ""),
+    client_secret=os.environ.get("ORANGE_MONEY_CLIENT_SECRET", ""),
+    merchant_code=os.environ.get("ORANGE_MONEY_MERCHANT_CODE", ""),
+    sitename=os.environ.get("ORANGE_MONEY_SITENAME", ""),
+    callback_url=os.environ.get("ORANGE_MONEY_CALLBACK_URL", "http://localhost:8000/api/webhooks/waslpay"),
+    webhook_api_key=os.environ.get("ORANGE_MONEY_WEBHOOK_API_KEY", ""),
+    environment=os.environ.get("ORANGE_MONEY_ENVIRONMENT", "sandbox"),
     base_url=os.environ.get("ORANGE_MONEY_BASE_URL"),
 )`,
       };
     case "mtn-momo":
       return {
         importStmt: "from waslpay.providers.mtn_momo import MtnMomoProvider",
-        code: `provider = MtnMomoProvider(
+        code: `client = httpx.AsyncClient()
+provider = MtnMomoProvider(
+    client,
     subscription_key=os.environ.get("MTN_MOMO_SUBSCRIPTION_KEY", ""),
     api_user=os.environ.get("MTN_MOMO_API_USER", ""),
     api_key=os.environ.get("MTN_MOMO_API_KEY", ""),
@@ -28,7 +37,9 @@ function getProviderCodePython(provider: Provider): { importStmt: string; code: 
     default:
       return {
         importStmt: "from waslpay.providers.wave import WaveProvider",
-        code: `provider = WaveProvider(
+        code: `client = httpx.AsyncClient()
+provider = WaveProvider(
+    client,
     api_key=os.environ.get("WAVE_API_KEY", ""),
     webhook_secret=os.environ.get("WAVE_WEBHOOK_SECRET", ""),
     base_url=os.environ.get("WAVE_BASE_URL"),
@@ -44,6 +55,7 @@ export function generatePythonBoilerplate(framework: PythonFramework, providers:
   if (framework === "fastapi") {
     return `# Generated for ${framework}. Selected providers: ${providers.join(", ")}
 import os
+import httpx
 from fastapi import FastAPI, Request
 from waslpay import WaslPay, PaymentRequest
 ${importStmt}
@@ -63,7 +75,7 @@ async def create_checkout():
     ))
     return session
 
-@app.post("/webhooks/payments")
+@app.post("/api/webhooks/waslpay")
 async def webhook(request: Request):
     raw_body = await request.body()
     event = await waslpay.handle_webhook(raw_body, dict(request.headers))
@@ -74,6 +86,7 @@ async def webhook(request: Request):
   // Django
   return `# Generated for ${framework}. Selected providers: ${providers.join(", ")}
 import os
+import httpx
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from waslpay import WaslPay, PaymentRequest

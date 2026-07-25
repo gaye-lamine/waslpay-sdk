@@ -7,20 +7,32 @@ function getProviderCodePhp(provider: Provider): { importClass: string; code: st
     case "orange-money":
       return {
         importClass: "WaslPay\\Sdk\\Providers\\OrangeMoneyProvider",
-        code: `$provider = new OrangeMoneyProvider(
-    getenv('ORANGE_MONEY_AUTH_HEADER') ?: '',
-    getenv('ORANGE_MONEY_MERCHANT_KEY') ?: '',
+        code: `$httpClient = new Client();
+$provider = new OrangeMoneyProvider(
+    $httpClient,
+    getenv('ORANGE_MONEY_CLIENT_ID') ?: '',
+    getenv('ORANGE_MONEY_CLIENT_SECRET') ?: '',
+    getenv('ORANGE_MONEY_MERCHANT_CODE') ?: '',
+    getenv('ORANGE_MONEY_SITENAME') ?: '',
+    getenv('ORANGE_MONEY_CALLBACK_URL') ?: 'http://localhost:8000/api/webhooks/waslpay',
+    getenv('ORANGE_MONEY_WEBHOOK_API_KEY') ?: '',
+    getenv('ORANGE_MONEY_ENVIRONMENT') ?: 'sandbox',
+    null,
     getenv('ORANGE_MONEY_BASE_URL') ?: null
 );`,
       };
     case "mtn-momo":
       return {
         importClass: "WaslPay\\Sdk\\Providers\\MtnMomoProvider",
-        code: `$provider = new MtnMomoProvider(
+        code: `$httpClient = new Client();
+$provider = new MtnMomoProvider(
+    $httpClient,
     getenv('MTN_MOMO_SUBSCRIPTION_KEY') ?: '',
     getenv('MTN_MOMO_API_USER') ?: '',
     getenv('MTN_MOMO_API_KEY') ?: '',
     getenv('MTN_MOMO_TARGET_ENVIRONMENT') ?: 'sandbox',
+    'XOF',
+    null,
     getenv('MTN_MOMO_BASE_URL') ?: null
 );`,
       };
@@ -28,9 +40,12 @@ function getProviderCodePhp(provider: Provider): { importClass: string; code: st
     default:
       return {
         importClass: "WaslPay\\Sdk\\Providers\\WaveProvider",
-        code: `$provider = new WaveProvider(
+        code: `$httpClient = new Client();
+$provider = new WaveProvider(
+    $httpClient,
     getenv('WAVE_API_KEY') ?: '',
     getenv('WAVE_WEBHOOK_SECRET') ?: '',
+    null,
     getenv('WAVE_BASE_URL') ?: null
 );`,
       };
@@ -49,6 +64,7 @@ declare(strict_types=1);
 // Generated for ${framework}. Selected providers: ${providers.join(", ")}
 namespace App\\Http\\Controllers;
 
+use GuzzleHttp\\Client;
 use Illuminate\\Http\\Request;
 use WaslPay\\Sdk\\DTO\\PaymentRequest;
 use WaslPay\\Sdk\\WaslPay;
@@ -94,6 +110,7 @@ declare(strict_types=1);
 // Generated for ${framework}. Selected providers: ${providers.join(", ")}
 namespace App\\Controller;
 
+use GuzzleHttp\\Client;
 use Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController;
 use Symfony\\Component\\HttpFoundation\\JsonResponse;
 use Symfony\\Component\\HttpFoundation\\Request;
@@ -139,6 +156,7 @@ class PaymentController extends AbstractController
 declare(strict_types=1);
 
 // Generated for ${framework}. Selected providers: ${providers.join(", ")}
+use GuzzleHttp\\Client;
 use WaslPay\\Sdk\\DTO\\PaymentRequest;
 use WaslPay\\Sdk\\WaslPay;
 use ${importClass};
@@ -151,7 +169,7 @@ $session = $waslPay->initiatePayment(
     new PaymentRequest(1000, 'XOF', 'order-123', '+221770000000')
 );
 
-// Webhook endpoint: pass untouched request body and headers
+// Webhook endpoint (/api/webhooks/waslpay): pass untouched request body and headers
 $rawBody = file_get_contents('php://input');
 $headers = function_exists('getallheaders') ? getallheaders() : [];
 $event = $waslPay->handleWebhook($rawBody, $headers);
