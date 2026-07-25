@@ -31,7 +31,7 @@ Consultez le document [Compatibilité et capacités par provider](compatibility.
 ### 3 Runtimes et SDKs officiels
 - **Node.js / TypeScript** (`@waslpay/core-node`)
 - **PHP** (`waslpay/core-php`)
-- **Python** (`waslpay-python`)
+- **Python** (`waslpay-sdk`)
 
 Toutes les implémentations garantissent le même contrat d'interface, la même validation stricte des statuts (`PaymentStatusResult`), et la même déduplication d'événements via `WebhookEventStore`.
 
