@@ -14,9 +14,9 @@ const config: Config = {
   tagline: "Documentation du SDK de paiement mobile unifié",
   favicon: "img/favicon.svg",
   url: "https://gaye-lamine.github.io",
-  baseUrl: "/waslpay/",
+  baseUrl: "/waslpay-sdk/",
   organizationName: "gaye-lamine",
-  projectName: "waslpay",
+  projectName: "waslpay-sdk",
   onBrokenLinks: "throw",
   markdown: {
     hooks: {
@@ -34,7 +34,7 @@ const config: Config = {
         docs: {
           routeBasePath: "/",
           sidebarPath: "./sidebars.ts",
-          editUrl: "https://github.com/gaye-lamine/waslpay/tree/main/packages/docs/",
+          editUrl: "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/docs/",
         },
         blog: false,
         theme: {
@@ -50,7 +50,7 @@ const config: Config = {
         { type: "docSidebar", sidebarId: "docs", position: "left", label: "Documentation" },
         { to: "/cli", label: "CLI", position: "left" },
         { to: "/", label: `SDK v${coreNodePackage.version}`, position: "right" },
-        { href: "https://github.com/gaye-lamine/waslpay", label: "GitHub", position: "right" },
+        { href: "https://github.com/gaye-lamine/waslpay-sdk", label: "GitHub", position: "right" },
       ],
     },
     footer: {
@@ -67,8 +67,8 @@ const config: Config = {
         {
           title: "Projet",
           items: [
-            { label: "GitHub", href: "https://github.com/gaye-lamine/waslpay" },
-            { label: "Changelog", href: "https://github.com/gaye-lamine/waslpay/blob/main/CHANGELOG.md" },
+            { label: "GitHub", href: "https://github.com/gaye-lamine/waslpay-sdk" },
+            { label: "Changelog", href: "https://github.com/gaye-lamine/waslpay-sdk/blob/main/CHANGELOG.md" },
           ],
         },
       ],
