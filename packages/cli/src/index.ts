@@ -26,6 +26,7 @@ program
   .description("Start the local WaslPay checkout and webhook simulator")
   .option("-p, --port <number>", "Port for the local simulator", parsePort, 4004)
   .option("-t, --target <url>", "Webhook receiver URL", "http://localhost:8000/api/webhooks/waslpay")
+  .option("--provider <provider>", "Provider to simulate: wave, orange, or mtn (affects webhook payload and auth header)", "wave")
   .action(devCommand);
 
 program
@@ -35,9 +36,9 @@ program
 
 program
   .command("trigger <event>")
-  .description("Send a signed, normalized test webhook event")
+  .description("Send a provider-realistic test webhook event (wave.payment.success, orange.payment.failed, mtn.payment.success)")
   .option("-t, --target <url>", "Webhook receiver URL", "http://localhost:8000/api/webhooks/waslpay")
-  .option("-s, --secret <secret>", "Webhook HMAC secret", "whsec_dev_12345")
+  .option("-s, --secret <secret>", "Secret for webhook auth: HMAC key for Wave, raw API key for Orange, subscription key for MTN", "mock_wave_webhook_secret")
   .action(triggerCommand);
 
 program.parseAsync(process.argv).catch((error: unknown) => {

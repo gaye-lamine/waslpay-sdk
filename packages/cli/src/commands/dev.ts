@@ -1,8 +1,21 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { createProviderMocks } from "./mock-api.js";
+import { buildProviderHeaders } from "./trigger.js";
 
-const DEV_WEBHOOK_SECRET = "whsec_dev_12345";
+// ---------------------------------------------------------------------------
+// Per-provider mock secrets (must match env.ts MOCK_VALUES exactly)
+// ---------------------------------------------------------------------------
+
+/** Mock secrets used by waslpay dev to sign/authenticate simulated webhooks. */
+export const DEV_MOCK_SECRETS = {
+  wave: "mock_wave_webhook_secret",
+  orange: "mock_orange_api_key",
+  mtn: "mock_mtn_subscription",
+} as const;
+
+export type DevProvider = keyof typeof DEV_MOCK_SECRETS;
+
 const MAX_REQUEST_SIZE = 1_048_576;
 
 type Simulation = "success" | "insufficient_funds" | "cancelled";
@@ -17,18 +30,10 @@ interface CheckoutRequest {
   reference?: unknown;
 }
 
-interface PaymentEvent {
-  id: string;
-  sessionId: string;
-  status: "success" | "failed";
-  reference?: string;
-  occurredAt: string;
-  error?: "INSUFFICIENT_FUNDS" | "USER_CANCELLED";
-}
-
 export interface DevCommandOptions {
   port: number;
   target: string;
+  provider: DevProvider;
 }
 
 export function parsePort(value: string): number {
@@ -43,16 +48,25 @@ export function parsePort(value: string): number {
 }
 
 export async function devCommand(options: DevCommandOptions): Promise<void> {
-  const server = createDevServer(options.target);
+  const provider = options.provider ?? "wave";
+  const server = createDevServer(options.target, provider);
 
   await listen(server, options.port);
   const port = getListeningPort(server);
+  const secret = DEV_MOCK_SECRETS[provider];
   console.log(`WaslPay dev server listening on http://localhost:${port}`);
   console.log(`Webhook target: ${new URL(options.target).toString()}`);
-  console.log(`Webhook HMAC secret: ${DEV_WEBHOOK_SECRET}`);
+  console.log(`Provider: ${provider}`);
+  if (provider === "wave") {
+    console.log(`Webhook HMAC secret (WAVE_WEBHOOK_SECRET): ${secret}`);
+  } else if (provider === "orange") {
+    console.log(`Webhook API key (ORANGE_MONEY_WEBHOOK_API_KEY): ${secret}`);
+  } else {
+    console.log(`Subscription key (MTN_MOMO_SUBSCRIPTION_KEY): ${secret}`);
+  }
 }
 
-export function createDevServer(target: string): Server {
+export function createDevServer(target: string, provider: DevProvider = "wave"): Server {
   const webhookTarget = validateTarget(target);
   const sessions = new Map<string, CheckoutSession>();
   const handleMock = createProviderMocks();
@@ -75,7 +89,7 @@ export function createDevServer(target: string): Server {
 
       const simulationMatch = url.pathname.match(/^\/checkout\/([^/]+)\/simulate$/);
       if (request.method === "POST" && simulationMatch?.[1] !== undefined) {
-        await simulateCheckout(request, response, sessions.get(simulationMatch[1]), webhookTarget);
+        await simulateCheckout(request, response, sessions.get(simulationMatch[1]), webhookTarget, provider);
         return;
       }
 
@@ -131,6 +145,7 @@ async function simulateCheckout(
   response: ServerResponse,
   session: CheckoutSession | undefined,
   target: URL,
+  provider: DevProvider,
 ): Promise<void> {
   if (session === undefined) {
     sendJson(response, 404, { error: "Checkout not found" });
@@ -139,17 +154,17 @@ async function simulateCheckout(
 
   const payload = await readJson<{ result?: unknown }>(request);
   const simulation = parseSimulation(payload.result);
-  const event = createPaymentEvent(session, simulation);
-  const rawBody = JSON.stringify(event);
-  const signature = createHmac("sha256", DEV_WEBHOOK_SECRET).update(rawBody).digest("hex");
+  const outcome = simulation === "success" ? "success" : "failed";
+  const secret = DEV_MOCK_SECRETS[provider];
+
+  const webhookBody = buildProviderWebhookBody(provider, session, simulation);
+  const rawBody = JSON.stringify(webhookBody);
+  const headers = buildProviderHeaders(provider, rawBody, secret);
 
   try {
     const webhookResponse = await fetch(target, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-waslpay-signature": `sha256=${signature}`,
-      },
+      headers,
       body: rawBody,
     });
     const status = `${webhookResponse.status} ${webhookResponse.statusText}`.trim();
@@ -162,18 +177,42 @@ async function simulateCheckout(
   }
 }
 
-function createPaymentEvent(session: CheckoutSession, simulation: Simulation): PaymentEvent {
-  const common = {
-    id: randomUUID(),
-    sessionId: session.id,
-    ...(session.reference === undefined ? {} : { reference: session.reference }),
-    occurredAt: new Date().toISOString(),
-  };
-  if (simulation === "success") return { ...common, status: "success" };
-  if (simulation === "insufficient_funds") {
-    return { ...common, status: "failed", error: "INSUFFICIENT_FUNDS" };
+function buildProviderWebhookBody(
+  provider: DevProvider,
+  session: CheckoutSession,
+  simulation: Simulation,
+): object {
+  const outcome = simulation === "success" ? "success" : "failed";
+  switch (provider) {
+    case "wave":
+      return {
+        id: randomUUID(),
+        type: outcome === "success" ? "checkout.session.completed" : "checkout.session.failed",
+        data: {
+          id: session.id,
+          client_reference: session.reference,
+          payment_status: outcome === "success" ? "succeeded" : "cancelled",
+          checkout_status: "complete",
+        },
+        occurredAt: new Date().toISOString(),
+      };
+    case "orange":
+      return {
+        id: randomUUID(),
+        transactionId: session.id,
+        reference: session.reference ?? session.id,
+        status: outcome === "success" ? "SUCCESS" : "FAILED",
+        timestamp: new Date().toISOString(),
+      };
+    case "mtn":
+      return {
+        id: randomUUID(),
+        referenceId: session.id,
+        externalId: session.reference ?? session.id,
+        status: outcome === "success" ? "SUCCESSFUL" : "FAILED",
+        timestamp: new Date().toISOString(),
+      };
   }
-  return { ...common, status: "failed", error: "USER_CANCELLED" };
 }
 
 function parseSimulation(value: unknown): Simulation {

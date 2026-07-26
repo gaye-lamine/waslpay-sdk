@@ -3,36 +3,144 @@ import { createHmac, randomUUID } from "node:crypto";
 type Provider = "wave" | "orange" | "mtn";
 type Outcome = "success" | "failed";
 
-export interface WebhookPayload {
-  id: string;
-  sessionId: string;
-  status: "success" | "failed";
-  reference: string;
-  occurredAt: string;
-  error?: "UNKNOWN";
-}
+// ---------------------------------------------------------------------------
+// Public types
+// ---------------------------------------------------------------------------
 
 export interface TriggerCommandOptions {
   target: string;
   secret: string;
 }
 
+// ---------------------------------------------------------------------------
+// Provider-specific payload builders
+// ---------------------------------------------------------------------------
+
+export interface WaveWebhookPayload {
+  id: string;
+  type: string;
+  data: {
+    id: string;
+    client_reference: string;
+    payment_status: string;
+    checkout_status: string;
+  };
+  occurredAt: string;
+}
+
+export interface OrangeWebhookPayload {
+  id: string;
+  transactionId: string;
+  reference: string;
+  status: string;
+  timestamp: string;
+}
+
+export interface MtnWebhookPayload {
+  id: string;
+  referenceId: string;
+  externalId: string;
+  status: string;
+  timestamp: string;
+}
+
+export type ProviderWebhookPayload = WaveWebhookPayload | OrangeWebhookPayload | MtnWebhookPayload;
+
+export function buildWavePayload(outcome: Outcome, reference?: string): WaveWebhookPayload {
+  const sessionId = randomUUID();
+  const ref = reference ?? `trigger-wave-${sessionId}`;
+  return {
+    id: randomUUID(),
+    type: outcome === "success" ? "checkout.session.completed" : "checkout.session.failed",
+    data: {
+      id: sessionId,
+      client_reference: ref,
+      payment_status: outcome === "success" ? "succeeded" : "cancelled",
+      checkout_status: "complete",
+    },
+    occurredAt: new Date().toISOString(),
+  };
+}
+
+export function buildOrangePayload(outcome: Outcome, reference?: string): OrangeWebhookPayload {
+  const sessionId = randomUUID();
+  const ref = reference ?? `trigger-orange-${sessionId}`;
+  return {
+    id: randomUUID(),
+    transactionId: sessionId,
+    reference: ref,
+    status: outcome === "success" ? "SUCCESS" : "FAILED",
+    timestamp: new Date().toISOString(),
+  };
+}
+
+export function buildMtnPayload(outcome: Outcome, reference?: string): MtnWebhookPayload {
+  const sessionId = randomUUID();
+  const ref = reference ?? `trigger-mtn-${sessionId}`;
+  return {
+    id: randomUUID(),
+    referenceId: sessionId,
+    externalId: ref,
+    status: outcome === "success" ? "SUCCESSFUL" : "FAILED",
+    timestamp: new Date().toISOString(),
+  };
+}
+
+export function buildProviderPayload(provider: Provider, outcome: Outcome): ProviderWebhookPayload {
+  switch (provider) {
+    case "wave": return buildWavePayload(outcome);
+    case "orange": return buildOrangePayload(outcome);
+    case "mtn": return buildMtnPayload(outcome);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Provider-specific header builders
+// ---------------------------------------------------------------------------
+
+export function buildProviderHeaders(
+  provider: Provider,
+  rawBody: string,
+  secret: string
+): Record<string, string> {
+  const base = { "content-type": "application/json" };
+  switch (provider) {
+    case "wave": {
+      // WaveProvider.isValidSignature strips "v1=" prefix and accepts bare hex
+      const hmac = createHmac("sha256", secret).update(rawBody).digest("hex");
+      return { ...base, "x-wave-signature": hmac };
+    }
+    case "orange":
+      // OrangeMoneyProvider reads "x-api-key" and compares it directly to webhookApiKey
+      return { ...base, "x-api-key": secret };
+    case "mtn":
+      // MtnMomoProvider reads "ocp-apim-subscription-key" and compares to subscriptionKey
+      return { ...base, "ocp-apim-subscription-key": secret };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// HMAC helper (kept for backwards compat / signWebhook tests)
+// ---------------------------------------------------------------------------
+
+export function signWebhook(rawBody: string, secret: string): string {
+  return createHmac("sha256", secret).update(rawBody).digest("hex");
+}
+
+// ---------------------------------------------------------------------------
+// Main command
+// ---------------------------------------------------------------------------
+
 export async function triggerCommand(event: string, options: TriggerCommandOptions): Promise<void> {
-  const payload = buildWebhookPayload(event);
+  const parsed = parseEvent(event);
+  const payload = buildProviderPayload(parsed.provider, parsed.outcome);
   const target = validateTarget(options.target);
   const rawBody = JSON.stringify(payload);
-  const signature = signWebhook(rawBody, options.secret);
+  const headers = buildProviderHeaders(parsed.provider, rawBody, options.secret);
   const startedAt = performance.now();
 
   try {
-    const response = await fetch(target, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-waslpay-signature": `sha256=${signature}`,
-      },
-      body: rawBody,
-    });
+    const response = await fetch(target, { method: "POST", headers, body: rawBody });
     const elapsedMs = Math.round(performance.now() - startedAt);
     const status = `${response.status} ${response.statusText}`.trim();
     console.log(`[${status}] ${event} envoyé à ${target.toString()} en ${elapsedMs} ms`);
@@ -45,33 +153,16 @@ export async function triggerCommand(event: string, options: TriggerCommandOptio
   }
 }
 
-export function buildWebhookPayload(event: string): WebhookPayload {
-  const parsedEvent = parseEvent(event);
-  return createPaymentEvent(parsedEvent.provider, parsedEvent.outcome);
-}
-
-export function signWebhook(rawBody: string, secret: string): string {
-  return createHmac("sha256", secret).update(rawBody).digest("hex");
-}
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function parseEvent(value: string): { provider: Provider; outcome: Outcome } {
-  const match = value.match(/^(wave|orange|mtn)\.payment\.(success|failed)$/u);
+  const match = value.match(/^(wave|orange|mtn)\\.payment\\.(success|failed)$/u);
   if (match?.[1] === undefined || match[2] === undefined) {
     throw new Error("Unsupported event. Use wave.payment.success, orange.payment.failed, or mtn.payment.success.");
   }
   return { provider: match[1] as Provider, outcome: match[2] as Outcome };
-}
-
-function createPaymentEvent(provider: Provider, outcome: Outcome): WebhookPayload {
-  const sessionId = randomUUID();
-  return {
-    id: randomUUID(),
-    sessionId,
-    status: outcome === "success" ? "success" : "failed",
-    reference: `trigger-${provider}-${sessionId}`,
-    occurredAt: new Date().toISOString(),
-    ...(outcome === "failed" ? { error: "UNKNOWN" as const } : {}),
-  };
 }
 
 function validateTarget(value: string): URL {

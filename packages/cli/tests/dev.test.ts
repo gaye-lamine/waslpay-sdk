@@ -84,11 +84,12 @@ describe("createDevServer", () => {
     expect(received).toBeDefined();
     if (received === undefined) throw new Error("Expected the webhook receiver to receive a request.");
 
-    const expectedSignature = createHmac("sha256", "whsec_dev_12345").update(received.rawBody).digest("hex");
-    const event = JSON.parse(received.rawBody) as { sessionId: string; status: string; reference?: string };
+    const expectedSignature = createHmac("sha256", "mock_wave_webhook_secret").update(received.rawBody).digest("hex");
+    const event = JSON.parse(received.rawBody) as { data?: { id: string; client_reference?: string }; type?: string };
 
-    expect(received.headers["x-waslpay-signature"]).toBe(`sha256=${expectedSignature}`);
-    expect(event).toMatchObject({ sessionId: checkout.id, status: "success", reference: "order-456" });
+    expect(received.headers["x-wave-signature"]).toBe(expectedSignature);
+    expect(event.type).toBe("checkout.session.completed");
+    expect(event.data).toMatchObject({ id: checkout.id, client_reference: "order-456" });
   });
 });
 
