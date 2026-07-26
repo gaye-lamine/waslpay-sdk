@@ -3,6 +3,12 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.5 — 2026-07-26
+
+### Fixed
+
+- **CLI**: `waslpay dev` and `waslpay trigger` sent a generic `x-waslpay-signature` header that none of the 3 real providers understand -- Wave expects `x-wave-signature` (HMAC), Orange expects a raw `x-api-key`, MTN expects a raw `ocp-apim-subscription-key`. Found via a real blind end-to-end test with FastAPI. Both commands are now provider-aware and match each provider's real webhook verification contract, with positive and negative contract tests for all 3.
+
 ## 3.0.4 — 2026-07-25
 
 ### Fixed
