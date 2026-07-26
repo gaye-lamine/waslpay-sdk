@@ -4,7 +4,6 @@ import {
   buildOrangePayload,
   buildMtnPayload,
   buildProviderHeaders,
-  signWebhook,
 } from "../src/commands/trigger.js";
 
 import { WaveProvider } from "../../core-node/src/providers/wave.js";
@@ -119,11 +118,3 @@ describe("buildProviderPayload and headers contract test", () => {
   });
 });
 
-describe("signWebhook (backwards compatibility)", () => {
-  const rawBody = '{"id":"evt_123","status":"success"}';
-  const secret = "whsec_test_123";
-
-  it("matches a fixed HMAC-SHA256 test vector", () => {
-    expect(signWebhook(rawBody, secret)).toBe("769683777bb970b0dc5740e71e595b9a7b180adf9f81b031c7d2f43bb2c2ab3d");
-  });
-});

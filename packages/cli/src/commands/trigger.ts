@@ -120,14 +120,6 @@ export function buildProviderHeaders(
 }
 
 // ---------------------------------------------------------------------------
-// HMAC helper (kept for backwards compat / signWebhook tests)
-// ---------------------------------------------------------------------------
-
-export function signWebhook(rawBody: string, secret: string): string {
-  return createHmac("sha256", secret).update(rawBody).digest("hex");
-}
-
-// ---------------------------------------------------------------------------
 // Main command
 // ---------------------------------------------------------------------------
 
