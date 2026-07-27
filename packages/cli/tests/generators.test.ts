@@ -21,6 +21,10 @@ const providerEnvironmentLines: Readonly<Record<Provider, readonly string[]>> = 
   "mtn-momo": ["MTN_MOMO_SUBSCRIPTION_KEY=", "MTN_MOMO_DEFAULT_CURRENCY=XOF"],
 };
 
+// ---------------------------------------------------------------------------
+// Instantiation helpers
+// ---------------------------------------------------------------------------
+
 function verifyNodeInstantiation(code: string): void {
   const cleanCode = code.replace(/@[A-Za-z0-9_]+(?:\([^)]*\))?/g, "");
   const file = join(tmpdir(), `test_instantiation_${Date.now()}_${Math.random().toString(36).substring(2)}.mjs`);
@@ -111,6 +115,10 @@ function verifyPythonInstantiation(code: string): void {
   }
 }
 
+// ---------------------------------------------------------------------------
+// ENV generator tests
+// ---------------------------------------------------------------------------
+
 describe("generateEnvExample", () => {
   it.each(providers)("includes the expected variables for %s", (provider) => {
     const generated = generateEnvExample([provider]);
@@ -128,14 +136,19 @@ describe("generateEnvExample", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Node boilerplate — single provider
+// ---------------------------------------------------------------------------
+
 const nodeFrameworks: readonly NodeFramework[] = ["express", "fastify", "nestjs"];
 
-describe("generateNodeBoilerplate", () => {
+describe("generateNodeBoilerplate (single provider)", () => {
   it.each(nodeFrameworks.flatMap((framework) => providers.map((provider) => [framework, provider] as const)))
   ("generates %s boilerplate for %s", (framework, provider) => {
     const generated = generateNodeBoilerplate(framework, [provider]);
 
     expect(generated).toContain(`// Generated for ${framework}. Selected providers: ${provider}`);
+    // Single-provider: the canonical variable name is "provider"
     expect(generated).toContain("new WaslPay(provider);");
 
     // Real instantiation & syntax validation check (node --check and node execution)
@@ -143,9 +156,69 @@ describe("generateNodeBoilerplate", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Node boilerplate — multi-provider
+// ---------------------------------------------------------------------------
+
+describe("generateNodeBoilerplate (multi-provider)", () => {
+  // 2-provider combinations, one per framework
+  const twoProviders = ["wave", "orange-money"] as const;
+  const threeProviders = ["wave", "orange-money", "mtn-momo"] as const;
+
+  it.each(nodeFrameworks)("2 providers (wave + orange-money) on %s: routes and instances present", (framework) => {
+    const generated = generateNodeBoilerplate(framework, [...twoProviders]);
+
+    expect(generated).toContain(`// Generated for ${framework}. Selected providers: wave, orange-money`);
+
+    // Both provider-specific WaslPay instances
+    expect(generated).toMatch(/waslpay\s*Wave|waslpayWave/i);
+    expect(generated).toMatch(/waslpay\s*OrangeMoney|waslpayOrangeMoney/i);
+
+    // Provider-specific routes — NestJS uses relative paths without leading slash
+    const chkWave = framework === "nestjs" ? "checkout/wave" : "/checkout/wave";
+    const chkOrange = framework === "nestjs" ? "checkout/orange-money" : "/checkout/orange-money";
+    const wbkWave = framework === "nestjs" ? "api/webhooks/waslpay/wave" : "/api/webhooks/waslpay/wave";
+    const wbkOrange = framework === "nestjs" ? "api/webhooks/waslpay/orange-money" : "/api/webhooks/waslpay/orange-money";
+    expect(generated).toContain(chkWave);
+    expect(generated).toContain(chkOrange);
+    expect(generated).toContain(wbkWave);
+    expect(generated).toContain(wbkOrange);
+
+    // Real syntax + instantiation check
+    expect(() => verifyNodeInstantiation(generated)).not.toThrow();
+  });
+
+  it.each(nodeFrameworks)("3 providers (all) on %s: routes and instances present", (framework) => {
+    const generated = generateNodeBoilerplate(framework, [...threeProviders]);
+
+    expect(generated).toContain(`// Generated for ${framework}. Selected providers: wave, orange-money, mtn-momo`);
+
+    // All 3 provider-specific WaslPay instances
+    expect(generated).toMatch(/waslpay\s*Wave|waslpayWave/i);
+    expect(generated).toMatch(/waslpay\s*OrangeMoney|waslpayOrangeMoney/i);
+    expect(generated).toMatch(/waslpay\s*MtnMomo|waslpayMtnMomo/i);
+
+    // All 3 dedicated routes — NestJS relative paths, others absolute
+    const prefix = framework === "nestjs" ? "" : "/";
+    expect(generated).toContain(`${prefix}checkout/wave`);
+    expect(generated).toContain(`${prefix}checkout/orange-money`);
+    expect(generated).toContain(`${prefix}checkout/mtn-momo`);
+    expect(generated).toContain(`${prefix}api/webhooks/waslpay/wave`);
+    expect(generated).toContain(`${prefix}api/webhooks/waslpay/orange-money`);
+    expect(generated).toContain(`${prefix}api/webhooks/waslpay/mtn-momo`);
+
+    // Real syntax + instantiation check
+    expect(() => verifyNodeInstantiation(generated)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PHP boilerplate — single provider
+// ---------------------------------------------------------------------------
+
 const phpFrameworks: readonly PhpFramework[] = ["laravel", "symfony", "native"];
 
-describe("generatePhpBoilerplate", () => {
+describe("generatePhpBoilerplate (single provider)", () => {
   it.each(phpFrameworks.flatMap((framework) => providers.map((provider) => [framework, provider] as const)))
   ("generates %s boilerplate for %s", (framework, provider) => {
     const generated = generatePhpBoilerplate(framework, [provider]);
@@ -158,9 +231,65 @@ describe("generatePhpBoilerplate", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// PHP boilerplate — multi-provider
+// ---------------------------------------------------------------------------
+
+describe("generatePhpBoilerplate (multi-provider)", () => {
+  const twoProviders = ["wave", "mtn-momo"] as const;
+  const threeProviders = ["wave", "orange-money", "mtn-momo"] as const;
+
+  it.each(phpFrameworks)("2 providers (wave + mtn-momo) on %s: instances and routes present", (framework) => {
+    const generated = generatePhpBoilerplate(framework, [...twoProviders]);
+
+    expect(generated).toContain(`// Generated for ${framework}. Selected providers: wave, mtn-momo`);
+
+    // Both provider-specific WaslPay instances
+    expect(generated).toContain("$waslPayWave");
+    expect(generated).toContain("$waslPayMtnMomo");
+
+    // Both provider-specific route references
+    expect(generated).toContain("/checkout/wave");
+    expect(generated).toContain("/checkout/mtn-momo");
+    expect(generated).toContain("/api/webhooks/waslpay/wave");
+    expect(generated).toContain("/api/webhooks/waslpay/mtn-momo");
+
+    // Real syntax + instantiation check
+    expect(() => verifyPhpInstantiation(generated)).not.toThrow();
+  });
+
+  it.each(phpFrameworks)("3 providers (all) on %s: all 3 instances and routes present", (framework) => {
+    const generated = generatePhpBoilerplate(framework, [...threeProviders]);
+
+    expect(generated).toContain(`// Generated for ${framework}. Selected providers: wave, orange-money, mtn-momo`);
+
+    // All 3 provider-specific WaslPay instances
+    expect(generated).toContain("$waslPayWave");
+    expect(generated).toContain("$waslPayOrangeMoney");
+    expect(generated).toContain("$waslPayMtnMomo");
+
+    // All 3 checkout routes
+    expect(generated).toContain("/checkout/wave");
+    expect(generated).toContain("/checkout/orange-money");
+    expect(generated).toContain("/checkout/mtn-momo");
+
+    // All 3 webhook routes
+    expect(generated).toContain("/api/webhooks/waslpay/wave");
+    expect(generated).toContain("/api/webhooks/waslpay/orange-money");
+    expect(generated).toContain("/api/webhooks/waslpay/mtn-momo");
+
+    // Real syntax + instantiation check
+    expect(() => verifyPhpInstantiation(generated)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Python boilerplate — single provider
+// ---------------------------------------------------------------------------
+
 const pythonFrameworks: readonly PythonFramework[] = ["fastapi", "django"];
 
-describe("generatePythonBoilerplate", () => {
+describe("generatePythonBoilerplate (single provider)", () => {
   it.each(pythonFrameworks.flatMap((framework) => providers.map((provider) => [framework, provider] as const)))
   ("generates %s boilerplate for %s", (framework, provider) => {
     const generated = generatePythonBoilerplate(framework, [provider]);
@@ -170,6 +299,58 @@ describe("generatePythonBoilerplate", () => {
     expect(generated).toContain("httpx.AsyncClient()");
 
     // Real instantiation & syntax validation check (py_compile and python execution)
+    expect(() => verifyPythonInstantiation(generated)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Python boilerplate — multi-provider
+// ---------------------------------------------------------------------------
+
+describe("generatePythonBoilerplate (multi-provider)", () => {
+  const twoProviders = ["wave", "mtn-momo"] as const;
+  const threeProviders = ["wave", "orange-money", "mtn-momo"] as const;
+
+  it.each(pythonFrameworks)("2 providers (wave + mtn-momo) on %s: instances and routes present", (framework) => {
+    const generated = generatePythonBoilerplate(framework, [...twoProviders]);
+
+    expect(generated).toContain(`# Generated for ${framework}. Selected providers: wave, mtn-momo`);
+
+    // Both provider-specific WaslPay instances
+    expect(generated).toContain("waslpay_wave = WaslPay(wave_provider)");
+    expect(generated).toContain("waslpay_mtn_momo = WaslPay(mtn_momo_provider)");
+
+    // Both provider-specific route paths
+    expect(generated).toContain("/checkout/wave");
+    expect(generated).toContain("/checkout/mtn-momo");
+    expect(generated).toContain("/api/webhooks/waslpay/wave");
+    expect(generated).toContain("/api/webhooks/waslpay/mtn-momo");
+
+    // Real syntax + instantiation check
+    expect(() => verifyPythonInstantiation(generated)).not.toThrow();
+  });
+
+  it.each(pythonFrameworks)("3 providers (all) on %s: all 3 instances and routes present", (framework) => {
+    const generated = generatePythonBoilerplate(framework, [...threeProviders]);
+
+    expect(generated).toContain(`# Generated for ${framework}. Selected providers: wave, orange-money, mtn-momo`);
+
+    // All 3 provider-specific WaslPay instances
+    expect(generated).toContain("waslpay_wave = WaslPay(wave_provider)");
+    expect(generated).toContain("waslpay_orange_money = WaslPay(orange_money_provider)");
+    expect(generated).toContain("waslpay_mtn_momo = WaslPay(mtn_momo_provider)");
+
+    // All 3 checkout routes
+    expect(generated).toContain("/checkout/wave");
+    expect(generated).toContain("/checkout/orange-money");
+    expect(generated).toContain("/checkout/mtn-momo");
+
+    // All 3 webhook routes
+    expect(generated).toContain("/api/webhooks/waslpay/wave");
+    expect(generated).toContain("/api/webhooks/waslpay/orange-money");
+    expect(generated).toContain("/api/webhooks/waslpay/mtn-momo");
+
+    // Real syntax + instantiation check
     expect(() => verifyPythonInstantiation(generated)).not.toThrow();
   });
 });

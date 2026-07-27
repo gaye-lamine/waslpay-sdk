@@ -2,72 +2,105 @@ import type { Provider } from "../env.js";
 
 export type PythonFramework = "fastapi" | "django";
 
-function getProviderCodePython(provider: Provider): { importStmt: string; code: string } {
+// ---------------------------------------------------------------------------
+// Naming helpers
+// ---------------------------------------------------------------------------
+
+/** "orange-money" → "orange_money", "mtn-momo" → "mtn_momo" */
+function pyVarName(provider: Provider): string {
+  return provider.replace(/-/gu, "_");
+}
+
+function pyClassName(provider: Provider): string {
+  switch (provider) {
+    case "orange-money": return "OrangeMoneyProvider";
+    case "mtn-momo": return "MtnMomoProvider";
+    case "wave": return "WaveProvider";
+  }
+}
+
+function pyImport(provider: Provider): string {
+  switch (provider) {
+    case "orange-money": return "from waslpay.providers.orange_money import OrangeMoneyProvider";
+    case "mtn-momo": return "from waslpay.providers.mtn_momo import MtnMomoProvider";
+    case "wave": return "from waslpay.providers.wave import WaveProvider";
+  }
+}
+
+function checkoutPath(provider: Provider, multi: boolean): string {
+  return multi ? `/checkout/${provider}` : "/checkout";
+}
+
+function webhookPath(provider: Provider, multi: boolean): string {
+  return multi ? `/api/webhooks/waslpay/${provider}` : "/api/webhooks/waslpay";
+}
+
+// ---------------------------------------------------------------------------
+// Provider instantiation snippets
+// ---------------------------------------------------------------------------
+
+function pyProviderBlock(provider: Provider, multi: boolean): string {
+  const v = pyVarName(provider);
+  const clientVar = multi ? `${v}_client` : "client";
+  const providerVar = multi ? `${v}_provider` : "provider";
+  const waslpayVar = multi ? `waslpay_${v}` : "waslpay";
+
+  let providerInit: string;
   switch (provider) {
     case "orange-money":
-      return {
-        importStmt: "from waslpay.providers.orange_money import OrangeMoneyProvider",
-        code: `client = httpx.AsyncClient()
-provider = OrangeMoneyProvider(
-    client,
+      providerInit = `OrangeMoneyProvider(
+    ${clientVar},
     client_id=os.environ.get("ORANGE_MONEY_CLIENT_ID", ""),
     client_secret=os.environ.get("ORANGE_MONEY_CLIENT_SECRET", ""),
     merchant_code=os.environ.get("ORANGE_MONEY_MERCHANT_CODE", ""),
     sitename=os.environ.get("ORANGE_MONEY_SITENAME", ""),
-    callback_url=os.environ.get("ORANGE_MONEY_CALLBACK_URL", "http://localhost:8000/api/webhooks/waslpay"),
+    callback_url=os.environ.get("ORANGE_MONEY_CALLBACK_URL", "http://localhost:8000${webhookPath("orange-money", multi)}"),
     webhook_api_key=os.environ.get("ORANGE_MONEY_WEBHOOK_API_KEY", ""),
     environment=os.environ.get("ORANGE_MONEY_ENVIRONMENT", "sandbox"),
     base_url=os.environ.get("ORANGE_MONEY_BASE_URL"),
-)`,
-      };
+)`;
+      break;
     case "mtn-momo":
-      return {
-        importStmt: "from waslpay.providers.mtn_momo import MtnMomoProvider",
-        code: `client = httpx.AsyncClient()
-provider = MtnMomoProvider(
-    client,
+      providerInit = `MtnMomoProvider(
+    ${clientVar},
     subscription_key=os.environ.get("MTN_MOMO_SUBSCRIPTION_KEY", ""),
     api_user=os.environ.get("MTN_MOMO_API_USER", ""),
     api_key=os.environ.get("MTN_MOMO_API_KEY", ""),
     target_environment=os.environ.get("MTN_MOMO_TARGET_ENVIRONMENT", "sandbox"),
     base_url=os.environ.get("MTN_MOMO_BASE_URL"),
-)`,
-      };
+)`;
+      break;
     case "wave":
     default:
-      return {
-        importStmt: "from waslpay.providers.wave import WaveProvider",
-        code: `client = httpx.AsyncClient()
-provider = WaveProvider(
-    client,
+      providerInit = `WaveProvider(
+    ${clientVar},
     api_key=os.environ.get("WAVE_API_KEY", ""),
     webhook_secret=os.environ.get("WAVE_WEBHOOK_SECRET", ""),
     base_url=os.environ.get("WAVE_BASE_URL"),
-)`,
-      };
+)`;
   }
+
+  return `${clientVar} = httpx.AsyncClient()
+${providerVar} = ${providerInit}
+${waslpayVar} = WaslPay(${providerVar})`;
 }
 
-export function generatePythonBoilerplate(framework: PythonFramework, providers: readonly Provider[]): string {
-  const primaryProvider = providers[0] ?? "wave";
-  const { importStmt, code } = getProviderCodePython(primaryProvider);
+// ---------------------------------------------------------------------------
+// FastAPI routes
+// ---------------------------------------------------------------------------
 
-  if (framework === "fastapi") {
-    return `# Generated for ${framework}. Selected providers: ${providers.join(", ")}
-import os
-import httpx
-from fastapi import FastAPI, Request
-from waslpay import WaslPay, PaymentRequest
-${importStmt}
+function fastapiRoutes(providers: readonly Provider[], multi: boolean): string {
+  const routes: string[] = [];
+  for (const p of providers) {
+    const v = pyVarName(p);
+    const waslpayVar = multi ? `waslpay_${v}` : "waslpay";
+    const fnSuffix = multi ? `_${v}` : "";
+    const chkPath = checkoutPath(p, multi);
+    const wbkPath = webhookPath(p, multi);
 
-app = FastAPI()
-
-${code}
-waslpay = WaslPay(provider)
-
-@app.post("/checkout")
-async def create_checkout():
-    session = await waslpay.initiate_payment(PaymentRequest(
+    routes.push(`@app.post("${chkPath}")
+async def create_checkout${fnSuffix}():
+    session = await ${waslpayVar}.initiate_payment(PaymentRequest(
         amount=1000,
         currency="XOF",
         reference="order-123",
@@ -75,29 +108,32 @@ async def create_checkout():
     ))
     return session
 
-@app.post("/api/webhooks/waslpay")
-async def webhook(request: Request):
+@app.post("${wbkPath}")
+async def webhook${fnSuffix}(request: Request):
     raw_body = await request.body()
-    event = await waslpay.handle_webhook(raw_body, dict(request.headers))
-    return {"event_id": event.id}
-`;
+    event = await ${waslpayVar}.handle_webhook(raw_body, dict(request.headers))
+    return {"event_id": event.id}`);
   }
+  return routes.join("\n\n");
+}
 
-  // Django
-  return `# Generated for ${framework}. Selected providers: ${providers.join(", ")}
-import os
-import httpx
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from waslpay import WaslPay, PaymentRequest
-${importStmt}
+// ---------------------------------------------------------------------------
+// Django routes (view functions — routing wired in urls.py)
+// ---------------------------------------------------------------------------
 
-${code}
-waslpay = WaslPay(provider)
+function djangoRoutes(providers: readonly Provider[], multi: boolean): string {
+  const views: string[] = [];
+  for (const p of providers) {
+    const v = pyVarName(p);
+    const waslpayVar = multi ? `waslpay_${v}` : "waslpay";
+    const fnSuffix = multi ? `_${v}` : "";
+    const chkPath = checkoutPath(p, multi);
+    const wbkPath = webhookPath(p, multi);
 
+    views.push(`# POST ${chkPath}
 @csrf_exempt
-async def create_checkout(request):
-    session = await waslpay.initiate_payment(PaymentRequest(
+async def create_checkout${fnSuffix}(request):
+    session = await ${waslpayVar}.initiate_payment(PaymentRequest(
         amount=1000,
         currency="XOF",
         reference="order-123",
@@ -105,10 +141,53 @@ async def create_checkout(request):
     ))
     return JsonResponse({"session_id": session.id, "payment_url": session.payment_url})
 
+# POST ${wbkPath}
 @csrf_exempt
-async def webhook(request):
+async def webhook${fnSuffix}(request):
     raw_body = request.body
-    event = await waslpay.handle_webhook(raw_body, dict(request.headers.items()))
-    return JsonResponse({"event_id": event.id})
+    event = await ${waslpayVar}.handle_webhook(raw_body, dict(request.headers.items()))
+    return JsonResponse({"event_id": event.id})`);
+  }
+  return views.join("\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// Main generator
+// ---------------------------------------------------------------------------
+
+export function generatePythonBoilerplate(framework: PythonFramework, providers: readonly Provider[]): string {
+  const multi = providers.length > 1;
+  const header = `# Generated for ${framework}. Selected providers: ${providers.join(", ")}`;
+  const imports = providers.map(pyImport).join("\n");
+  const blocks = providers.map((p) => pyProviderBlock(p, multi)).join("\n\n");
+
+  if (framework === "fastapi") {
+    return `${header}
+import os
+import httpx
+from fastapi import FastAPI, Request
+from waslpay import WaslPay, PaymentRequest
+${imports}
+
+app = FastAPI()
+
+${blocks}
+
+${fastapiRoutes(providers, multi)}
+`;
+  }
+
+  // Django
+  return `${header}
+import os
+import httpx
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from waslpay import WaslPay, PaymentRequest
+${imports}
+
+${blocks}
+
+${djangoRoutes(providers, multi)}
 `;
 }
