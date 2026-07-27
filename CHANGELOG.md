@@ -2,6 +2,11 @@
 
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
+## 3.0.6 — 2026-07-27
+
+### Added / Fixed
+
+- **CLI**: feat(cli): generated boilerplates now support multiple providers correctly -- previously, selecting several providers silently wired only the first one. Each selected provider now gets its own instance, dedicated checkout route, and dedicated webhook route where needed (Orange Money's callback URL). Fixed across Node.js, PHP, and Python, with 32 new consistency and instantiation tests. Found via a real blind end-to-end test with FastAPI.
 
 ## 3.0.5 — 2026-07-26
 
