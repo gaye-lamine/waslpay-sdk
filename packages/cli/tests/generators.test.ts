@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { generateEnvExample, type Provider } from "../src/generators/env.js";
+import { generateEnvExample, orangeMoneyWebhookPath, type Provider } from "../src/generators/env.js";
 import { generateNodeBoilerplate, type NodeFramework } from "../src/generators/boilerplates/node.js";
 import { generatePhpBoilerplate, type PhpFramework } from "../src/generators/boilerplates/php.js";
 import { generatePythonBoilerplate, type PythonFramework } from "../src/generators/boilerplates/python.js";
@@ -353,4 +353,113 @@ describe("generatePythonBoilerplate (multi-provider)", () => {
     // Real syntax + instantiation check
     expect(() => verifyPythonInstantiation(generated)).not.toThrow();
   });
+});
+
+// ---------------------------------------------------------------------------
+// env ↔ boilerplate consistency — ORANGE_MONEY_CALLBACK_URL
+// ---------------------------------------------------------------------------
+
+describe("env ↔ boilerplate consistency (ORANGE_MONEY_CALLBACK_URL)", () => {
+  const singleOrange: readonly Provider[] = ["orange-money"];
+  const multiOrangeWave: readonly Provider[] = ["orange-money", "wave"];
+  const allThree: readonly Provider[] = ["wave", "orange-money", "mtn-momo"];
+
+  // ------------------------------------------------------------------
+  // orangeMoneyWebhookPath() helper — the single source of truth
+  // ------------------------------------------------------------------
+
+  it("orangeMoneyWebhookPath: single provider → /api/webhooks/waslpay", () => {
+    expect(orangeMoneyWebhookPath(singleOrange)).toBe("/api/webhooks/waslpay");
+  });
+
+  it("orangeMoneyWebhookPath: multi-provider → /api/webhooks/waslpay/orange-money", () => {
+    expect(orangeMoneyWebhookPath(multiOrangeWave)).toBe("/api/webhooks/waslpay/orange-money");
+    expect(orangeMoneyWebhookPath(allThree)).toBe("/api/webhooks/waslpay/orange-money");
+  });
+
+  // ------------------------------------------------------------------
+  // .env non-mock: ORANGE_MONEY_CALLBACK_URL comment contains correct path
+  // ------------------------------------------------------------------
+
+  it("generateEnvExample (non-mock, single): ORANGE_MONEY_CALLBACK_URL comment points to /api/webhooks/waslpay", () => {
+    const env = generateEnvExample(singleOrange);
+    expect(env).toContain("/api/webhooks/waslpay");
+    expect(env).not.toContain("/api/webhooks/waslpay/orange-money");
+  });
+
+  it("generateEnvExample (non-mock, 2 providers): ORANGE_MONEY_CALLBACK_URL comment points to /api/webhooks/waslpay/orange-money", () => {
+    const env = generateEnvExample(multiOrangeWave);
+    expect(env).toContain("/api/webhooks/waslpay/orange-money");
+  });
+
+  it("generateEnvExample (non-mock, 3 providers): ORANGE_MONEY_CALLBACK_URL comment points to /api/webhooks/waslpay/orange-money", () => {
+    const env = generateEnvExample(allThree);
+    expect(env).toContain("/api/webhooks/waslpay/orange-money");
+  });
+
+  // ------------------------------------------------------------------
+  // .env mock: ORANGE_MONEY_CALLBACK_URL value (not just a comment) is exact
+  // ------------------------------------------------------------------
+
+  it("generateEnvExample (mock, single): ORANGE_MONEY_CALLBACK_URL=http://localhost:8000/api/webhooks/waslpay", () => {
+    const env = generateEnvExample(singleOrange, true);
+    expect(env).toContain("ORANGE_MONEY_CALLBACK_URL=http://localhost:8000/api/webhooks/waslpay\n");
+    expect(env).not.toContain("ORANGE_MONEY_CALLBACK_URL=http://localhost:8000/api/webhooks/waslpay/orange-money");
+  });
+
+  it("generateEnvExample (mock, 2 providers): ORANGE_MONEY_CALLBACK_URL=http://localhost:8000/api/webhooks/waslpay/orange-money", () => {
+    const env = generateEnvExample(multiOrangeWave, true);
+    expect(env).toContain("ORANGE_MONEY_CALLBACK_URL=http://localhost:8000/api/webhooks/waslpay/orange-money");
+  });
+
+  it("generateEnvExample (mock, 3 providers): ORANGE_MONEY_CALLBACK_URL=http://localhost:8000/api/webhooks/waslpay/orange-money", () => {
+    const env = generateEnvExample(allThree, true);
+    expect(env).toContain("ORANGE_MONEY_CALLBACK_URL=http://localhost:8000/api/webhooks/waslpay/orange-money");
+  });
+
+  // ------------------------------------------------------------------
+  // Cross-check: URL in mock .env == webhook route in each boilerplate
+  // ------------------------------------------------------------------
+
+  it.each(["express", "fastify", "nestjs"] as const)(
+    "Node/%s multi-provider: mock env callback URL matches generated webhook route",
+    (framework) => {
+      const env = generateEnvExample(["orange-money", "wave"], true);
+      const boilerplate = generateNodeBoilerplate(framework, ["orange-money", "wave"]);
+
+      // Extract the path portion of the callback URL from the mock .env
+      const match = env.match(/ORANGE_MONEY_CALLBACK_URL=(http:\/\/localhost:\d+(\/[^\n]*)?)/);
+      expect(match).not.toBeNull();
+      const webhookPath = new URL(match![1]).pathname;
+
+      // The boilerplate must reference that exact webhook path
+      expect(boilerplate).toContain(webhookPath);
+    },
+  );
+
+  it.each(["laravel", "symfony", "native"] as const)(
+    "PHP/%s multi-provider: mock env callback URL matches generated webhook route",
+    (framework) => {
+      const env = generateEnvExample(["orange-money", "wave"], true);
+      const boilerplate = generatePhpBoilerplate(framework, ["orange-money", "wave"]);
+
+      const match = env.match(/ORANGE_MONEY_CALLBACK_URL=(http:\/\/localhost:\d+(\/[^\n]*)?)/);
+      expect(match).not.toBeNull();
+      const webhookPath = new URL(match![1]).pathname;
+      expect(boilerplate).toContain(webhookPath);
+    },
+  );
+
+  it.each(["fastapi", "django"] as const)(
+    "Python/%s multi-provider: mock env callback URL matches generated webhook route",
+    (framework) => {
+      const env = generateEnvExample(["orange-money", "wave"], true);
+      const boilerplate = generatePythonBoilerplate(framework, ["orange-money", "wave"]);
+
+      const match = env.match(/ORANGE_MONEY_CALLBACK_URL=(http:\/\/localhost:\d+(\/[^\n]*)?)/);
+      expect(match).not.toBeNull();
+      const webhookPath = new URL(match![1]).pathname;
+      expect(boilerplate).toContain(webhookPath);
+    },
+  );
 });
