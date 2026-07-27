@@ -2,6 +2,13 @@
 
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
+
+## 3.0.7 — 2026-07-27
+
+### Fixed
+
+- **CLI**: clarify that `waslpay trigger` supports the full `<provider>.payment.<success|failed>` event matrix for all 3 providers (Wave, Orange Money, MTN MoMo). Added 8 new 3x2 matrix contract tests.
+
 ## 3.0.6 — 2026-07-27
 
 ### Added / Fixed

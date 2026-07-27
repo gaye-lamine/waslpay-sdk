@@ -149,10 +149,15 @@ export async function triggerCommand(event: string, options: TriggerCommandOptio
 // Helpers
 // ---------------------------------------------------------------------------
 
-function parseEvent(value: string): { provider: Provider; outcome: Outcome } {
-  const match = value.match(/^(wave|orange|mtn)\\.payment\\.(success|failed)$/u);
+export const SUPPORTED_PROVIDERS = ["wave", "orange", "mtn"] as const;
+export const SUPPORTED_OUTCOMES = ["success", "failed"] as const;
+
+export function parseEvent(value: string): { provider: Provider; outcome: Outcome } {
+  const match = value.match(/^(wave|orange|mtn)\.payment\.(success|failed)$/u);
   if (match?.[1] === undefined || match[2] === undefined) {
-    throw new Error("Unsupported event. Use wave.payment.success, orange.payment.failed, or mtn.payment.success.");
+    throw new Error(
+      "Unsupported event. Format must be <provider>.payment.<success|failed> (e.g., wave.payment.success, orange.payment.success, mtn.payment.failed)."
+    );
   }
   return { provider: match[1] as Provider, outcome: match[2] as Outcome };
 }

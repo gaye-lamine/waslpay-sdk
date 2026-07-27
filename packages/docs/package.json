@@ -1,6 +1,6 @@
 {
   "name": "@waslpay/docs",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "private": true,
   "scripts": {
     "sync:content": "node scripts/sync-content.mjs",

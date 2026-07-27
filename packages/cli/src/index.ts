@@ -36,7 +36,7 @@ program
 
 program
   .command("trigger <event>")
-  .description("Send a provider-realistic test webhook event (wave.payment.success, orange.payment.failed, mtn.payment.success)")
+  .description("Send a provider-realistic test webhook event (<provider>.payment.<success|failed>, e.g. wave.payment.success, orange.payment.success, mtn.payment.failed)")
   .option("-t, --target <url>", "Webhook receiver URL", "http://localhost:8000/api/webhooks/waslpay")
   .option("-s, --secret <secret>", "Secret for webhook auth: HMAC key for Wave, raw API key for Orange, subscription key for MTN", "mock_wave_webhook_secret")
   .action(triggerCommand);

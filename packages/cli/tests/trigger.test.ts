@@ -4,6 +4,8 @@ import {
   buildOrangePayload,
   buildMtnPayload,
   buildProviderHeaders,
+  buildProviderPayload,
+  parseEvent,
 } from "../src/commands/trigger.js";
 
 import { WaveProvider } from "../../core-node/src/providers/wave.js";
@@ -115,6 +117,48 @@ describe("buildProviderPayload and headers contract test", () => {
     });
 
     await expect(provider.handleWebhook(rawBody, badHeaders)).rejects.toThrow("Invalid MTN MoMo webhook security key");
+  });
+});
+
+describe("parseEvent - 3x2 event matrix validation", () => {
+  const providers = ["wave", "orange", "mtn"] as const;
+  const outcomes = ["success", "failed"] as const;
+
+  it.each(
+    providers.flatMap((provider) =>
+      outcomes.map((outcome) => [provider, outcome] as const)
+    )
+  )("parses %s.payment.%s correctly and builds a valid payload", (provider, outcome) => {
+    const eventName = `${provider}.payment.${outcome}`;
+    const parsed = parseEvent(eventName);
+
+    expect(parsed.provider).toBe(provider);
+    expect(parsed.outcome).toBe(outcome);
+
+    const payload = buildProviderPayload(parsed.provider, parsed.outcome);
+    expect(payload).toBeDefined();
+    expect(payload.id).toBeDefined();
+  });
+
+  it("accepts all 6 events in the 3x2 matrix (wave, orange, mtn x success, failed)", () => {
+    const expectedEvents = [
+      "wave.payment.success",
+      "wave.payment.failed",
+      "orange.payment.success",
+      "orange.payment.failed",
+      "mtn.payment.success",
+      "mtn.payment.failed",
+    ];
+
+    for (const evt of expectedEvents) {
+      expect(() => parseEvent(evt)).not.toThrow();
+    }
+  });
+
+  it("rejects invalid event strings", () => {
+    expect(() => parseEvent("invalid.event")).toThrow("Unsupported event");
+    expect(() => parseEvent("wave.payment.unknown")).toThrow("Unsupported event");
+    expect(() => parseEvent("orange.checkout.success")).toThrow("Unsupported event");
   });
 });
 

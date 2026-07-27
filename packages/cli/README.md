@@ -118,8 +118,8 @@ Configuration WaslPay incomplète.
 ### `trigger <event>`
 
 Forge un webhook normalisé, le signe avec HMAC-SHA256 et l’envoie à la cible.
-Les événements acceptés suivent le format `wave.payment.success`,
-`orange.payment.failed` ou `mtn.payment.success`.
+Les événements acceptés suivent le format `<provider>.payment.<success|failed>`
+(ex: `wave.payment.success`, `orange.payment.success`, `mtn.payment.failed`).
 
 Le code retour HTTP et le temps d'exécution dépendent de la cible réelle ; les
 valeurs ci-dessous sont des sorties observées, pas des valeurs fixes.
