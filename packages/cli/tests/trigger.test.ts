@@ -7,6 +7,7 @@ import {
   buildProviderPayload,
   parseEvent,
 } from "../src/commands/trigger.js";
+import { DEV_MOCK_SECRETS } from "../src/generators/env.js";
 
 import { WaveProvider } from "../../core-node/src/providers/wave.js";
 import { OrangeMoneyProvider } from "../../core-node/src/providers/orange-money.js";
@@ -96,6 +97,8 @@ describe("buildProviderPayload and headers contract test", () => {
       subscriptionKey: secret,
       apiUser: "00000000-0000-4000-8000-000000000001",
       apiKey: "mock",
+      targetEnvironment: "sandbox",
+      defaultCurrency: "XOF",
     });
 
     const event = await provider.handleWebhook(rawBody, headers);
@@ -114,6 +117,8 @@ describe("buildProviderPayload and headers contract test", () => {
       subscriptionKey: secret,
       apiUser: "00000000-0000-4000-8000-000000000001",
       apiKey: "mock",
+      targetEnvironment: "sandbox",
+      defaultCurrency: "XOF",
     });
 
     await expect(provider.handleWebhook(rawBody, badHeaders)).rejects.toThrow("Invalid MTN MoMo webhook security key");
@@ -159,6 +164,19 @@ describe("parseEvent - 3x2 event matrix validation", () => {
     expect(() => parseEvent("invalid.event")).toThrow("Unsupported event");
     expect(() => parseEvent("wave.payment.unknown")).toThrow("Unsupported event");
     expect(() => parseEvent("orange.checkout.success")).toThrow("Unsupported event");
+  });
+
+  it("buildProviderHeaders defaults to DEV_MOCK_SECRETS exact values per provider", () => {
+    const waveHeaders = buildProviderHeaders("wave", "{}", DEV_MOCK_SECRETS.wave);
+    expect(waveHeaders["x-wave-signature"]).toBeDefined();
+
+    const orangeHeaders = buildProviderHeaders("orange", "{}", DEV_MOCK_SECRETS.orange);
+    expect(orangeHeaders["x-api-key"]).toBe("mock_orange_api_key");
+    expect(orangeHeaders["x-api-key"]).toBe(DEV_MOCK_SECRETS.orange);
+
+    const mtnHeaders = buildProviderHeaders("mtn", "{}", DEV_MOCK_SECRETS.mtn);
+    expect(mtnHeaders["ocp-apim-subscription-key"]).toBe("mock_mtn_subscription");
+    expect(mtnHeaders["ocp-apim-subscription-key"]).toBe(DEV_MOCK_SECRETS.mtn);
   });
 });
 
