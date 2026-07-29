@@ -27,6 +27,15 @@ const PROVIDER_ENV: Record<Provider, readonly string[]> = {
 };
 
 /**
+ * Single source of truth for mock secrets used across dev server, trigger command, and generated .env.
+ */
+export const DEV_MOCK_SECRETS = {
+  wave: "mock_wave_webhook_secret",
+  orange: "mock_orange_api_key",
+  mtn: "mock_mtn_subscription",
+} as const;
+
+/**
  * Returns the Orange Money webhook path, mirroring the boilerplate generator logic:
  * - Single provider  → /api/webhooks/waslpay
  * - Multi-provider   → /api/webhooks/waslpay/orange-money
@@ -38,15 +47,23 @@ export function orangeMoneyWebhookPath(providers: readonly Provider[]): string {
 }
 
 const MOCK_BASE: Record<"wave" | "mtn-momo", readonly string[]> = {
-  // WAVE_WEBHOOK_SECRET must match DEV_MOCK_SECRETS.wave in dev.ts
-  wave: ["WAVE_API_KEY=mock_wave_key", "WAVE_WEBHOOK_SECRET=mock_wave_webhook_secret", "WAVE_BASE_URL=http://localhost:4004/mock/wave"],
-  // MTN_MOMO_SUBSCRIPTION_KEY is also used as the webhook auth header -- must match DEV_MOCK_SECRETS.mtn in dev.ts
-  "mtn-momo": ["MTN_MOMO_SUBSCRIPTION_KEY=mock_mtn_subscription", "MTN_MOMO_API_USER=00000000-0000-4000-8000-000000000001", "MTN_MOMO_API_KEY=mock_mtn_key", "MTN_MOMO_TARGET_ENVIRONMENT=sandbox", "MTN_MOMO_DEFAULT_CURRENCY=XOF", "MTN_MOMO_BASE_URL=http://localhost:4004/mock/mtn"],
+  wave: [
+    "WAVE_API_KEY=mock_wave_key",
+    `WAVE_WEBHOOK_SECRET=${DEV_MOCK_SECRETS.wave}`,
+    "WAVE_BASE_URL=http://localhost:4004/mock/wave",
+  ],
+  "mtn-momo": [
+    `MTN_MOMO_SUBSCRIPTION_KEY=${DEV_MOCK_SECRETS.mtn}`,
+    "MTN_MOMO_API_USER=00000000-0000-4000-8000-000000000001",
+    "MTN_MOMO_API_KEY=mock_mtn_key",
+    "MTN_MOMO_TARGET_ENVIRONMENT=sandbox",
+    "MTN_MOMO_DEFAULT_CURRENCY=XOF",
+    "MTN_MOMO_BASE_URL=http://localhost:4004/mock/mtn",
+  ],
 };
 
 /** Build Orange Money mock lines — callback URL depends on provider count. */
 function orangeMoneyMockLines(providers: readonly Provider[]): readonly string[] {
-  // ORANGE_MONEY_WEBHOOK_API_KEY must match DEV_MOCK_SECRETS.orange in dev.ts
   const callbackUrl = `http://localhost:8000${orangeMoneyWebhookPath(providers)}`;
   return [
     "ORANGE_MONEY_CLIENT_ID=mock_orange_client",
@@ -54,7 +71,7 @@ function orangeMoneyMockLines(providers: readonly Provider[]): readonly string[]
     "ORANGE_MONEY_MERCHANT_CODE=mock_merchant",
     "ORANGE_MONEY_SITENAME=waslpay-dev",
     `ORANGE_MONEY_CALLBACK_URL=${callbackUrl}`,
-    "ORANGE_MONEY_WEBHOOK_API_KEY=mock_orange_api_key",
+    `ORANGE_MONEY_WEBHOOK_API_KEY=${DEV_MOCK_SECRETS.orange}`,
     "ORANGE_MONEY_ENVIRONMENT=sandbox",
     "ORANGE_MONEY_BASE_URL=http://localhost:4004/mock/orange",
   ];

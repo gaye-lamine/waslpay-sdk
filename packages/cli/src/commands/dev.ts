@@ -1,18 +1,10 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { DEV_MOCK_SECRETS } from "../generators/env.js";
 import { createProviderMocks } from "./mock-api.js";
 import { buildProviderHeaders } from "./trigger.js";
 
-// ---------------------------------------------------------------------------
-// Per-provider mock secrets (must match env.ts MOCK_VALUES exactly)
-// ---------------------------------------------------------------------------
-
-/** Mock secrets used by waslpay dev to sign/authenticate simulated webhooks. */
-export const DEV_MOCK_SECRETS = {
-  wave: "mock_wave_webhook_secret",
-  orange: "mock_orange_api_key",
-  mtn: "mock_mtn_subscription",
-} as const;
+export { DEV_MOCK_SECRETS };
 
 export type DevProvider = keyof typeof DEV_MOCK_SECRETS;
 

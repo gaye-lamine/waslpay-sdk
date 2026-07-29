@@ -119,7 +119,17 @@ function verifyPythonInstantiation(code: string): void {
 // ENV generator tests
 // ---------------------------------------------------------------------------
 
+import { generateEnvExample, orangeMoneyWebhookPath, DEV_MOCK_SECRETS, type Provider } from "../src/generators/env.js";
+
 describe("generateEnvExample", () => {
+  it("DEV_MOCK_SECRETS match generated .env mock values for all 3 providers", () => {
+    const mockEnv = generateEnvExample(["wave", "orange-money", "mtn-momo"], true);
+
+    expect(mockEnv).toContain(`WAVE_WEBHOOK_SECRET=${DEV_MOCK_SECRETS.wave}`);
+    expect(mockEnv).toContain(`ORANGE_MONEY_WEBHOOK_API_KEY=${DEV_MOCK_SECRETS.orange}`);
+    expect(mockEnv).toContain(`MTN_MOMO_SUBSCRIPTION_KEY=${DEV_MOCK_SECRETS.mtn}`);
+  });
+
   it.each(providers)("includes the expected variables for %s", (provider) => {
     const generated = generateEnvExample([provider]);
 

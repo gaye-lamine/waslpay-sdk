@@ -1,4 +1,5 @@
 import { createHmac, randomUUID } from "node:crypto";
+import { DEV_MOCK_SECRETS } from "../generators/env.js";
 
 type Provider = "wave" | "orange" | "mtn";
 type Outcome = "success" | "failed";
@@ -9,7 +10,7 @@ type Outcome = "success" | "failed";
 
 export interface TriggerCommandOptions {
   target: string;
-  secret: string;
+  secret?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -128,7 +129,8 @@ export async function triggerCommand(event: string, options: TriggerCommandOptio
   const payload = buildProviderPayload(parsed.provider, parsed.outcome);
   const target = validateTarget(options.target);
   const rawBody = JSON.stringify(payload);
-  const headers = buildProviderHeaders(parsed.provider, rawBody, options.secret);
+  const secret = options.secret ?? DEV_MOCK_SECRETS[parsed.provider];
+  const headers = buildProviderHeaders(parsed.provider, rawBody, secret);
   const startedAt = performance.now();
 
   try {
