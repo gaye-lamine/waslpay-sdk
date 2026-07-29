@@ -3,6 +3,12 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.8 — 2026-07-29
+
+### Fixed
+
+- **CLI**: `waslpay trigger` defaulted `--secret` to a hardcoded Wave value, so simulating orange or mtn webhooks without explicitly passing `--secret` always failed with an invalid key/signature error -- found via a real blind end-to-end multi-provider FastAPI test. Centralized mock secrets (`DEV_MOCK_SECRETS`) as a single source shared between `dev.ts`, `trigger.ts`, and `env.ts`, with regression tests to catch future divergence.
+
 ## 3.0.7 — 2026-07-27
 
 ### Fixed
