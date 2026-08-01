@@ -1,6 +1,12 @@
 {
   "name": "@waslpay/landing",
   "version": "3.0.9",
+  "homepage": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/landing",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gaye-lamine/waslpay-sdk.git",
+    "directory": "packages/landing"
+  },
   "private": true,
   "description": "Official WaslPay SDK landing page.",
   "scripts": {

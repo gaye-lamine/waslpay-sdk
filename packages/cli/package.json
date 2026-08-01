@@ -2,6 +2,12 @@
   "name": "@waslpay/cli",
   "version": "3.0.9",
   "description": "Interactive WaslPay integration generator.",
+  "homepage": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/cli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gaye-lamine/waslpay-sdk.git",
+    "directory": "packages/cli"
+  },
   "type": "module",
   "bin": {
     "waslpay": "./bin/waslpay.js"

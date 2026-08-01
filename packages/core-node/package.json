@@ -2,13 +2,13 @@
   "name": "@waslpay/core-node",
   "version": "3.0.9",
   "type": "module",
-  "homepage": "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-node",
+  "homepage": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/core-node",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gaye-lamine/waslpay.git",
+    "url": "git+https://github.com/gaye-lamine/waslpay-sdk.git",
     "directory": "packages/core-node"
   },
-  "documentation": "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-node",
+  "documentation": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/core-node",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

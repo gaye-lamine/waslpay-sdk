@@ -3,10 +3,10 @@
   "description": "Unified mobile-money payment SDK core for PHP.",
   "license": "MIT",
   "type": "library",
-  "homepage": "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-php",
+  "homepage": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/core-php",
   "support": {
-    "source": "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-php",
-    "docs": "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-php"
+    "source": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/core-php",
+    "docs": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/core-php"
   },
   "require": {
     "php": ">=8.1",

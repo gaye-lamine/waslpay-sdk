@@ -3,9 +3,9 @@ name = "waslpay-sdk"
 version = "3.0.9"
 description = "Unified West African mobile-money payment SDK."
 authors = ["WaslPay Contributors"]
-homepage = "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-python"
-repository = "https://github.com/gaye-lamine/waslpay.git"
-documentation = "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-python"
+homepage = "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/core-python"
+repository = "https://github.com/gaye-lamine/waslpay-sdk.git"
+documentation = "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/core-python"
 packages = [{ include = "waslpay" }]
 
 [tool.poetry.dependencies]

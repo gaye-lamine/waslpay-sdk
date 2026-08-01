@@ -1,6 +1,12 @@
 {
   "name": "@waslpay/example-node-express",
   "version": "3.0.9",
+  "homepage": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/examples/node-express",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gaye-lamine/waslpay-sdk.git",
+    "directory": "packages/examples/node-express"
+  },
   "private": true,
   "type": "module",
   "scripts": {
