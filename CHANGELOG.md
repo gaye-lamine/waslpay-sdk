@@ -3,6 +3,14 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.11 — 2026-08-01
+
+### Fixed
+
+- **Docs**: Playground page rewritten with a step-by-step guide (install `waslpay dev`, expected terminal output, sandbox workflow) before the interactive component — the prerequisite command is now visible before the user interacts with the playground.
+- **Docs**: Removed "open source" mentions from all user-facing content (`introduction.md`, `README.md`).
+- **Docs**: Mode toggle labels replaced with user-facing language ("Sandbox (sans backend)" / "Mon application") instead of technical terms.
+
 ## 3.0.10 — 2026-08-01
 
 ### Added

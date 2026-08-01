@@ -1,6 +1,6 @@
 {
   "name": "@waslpay/docs",
-  "version": "3.0.10",
+  "version": "3.0.11",
   "homepage": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/docs",
   "repository": {
     "type": "git",
@@ -34,4 +34,5 @@
     "node": ">=20.0"
   }
 }
+
 
