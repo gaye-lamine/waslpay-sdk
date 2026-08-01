@@ -46,8 +46,10 @@ export async function devCommand(options: DevCommandOptions): Promise<void> {
   await listen(server, options.port);
   const port = getListeningPort(server);
   const secret = DEV_MOCK_SECRETS[provider];
+  const backendOrigin = new URL(options.target).origin;
   console.log(`WaslPay dev server listening on http://localhost:${port}`);
   console.log(`Webhook target: ${new URL(options.target).toString()}`);
+  console.log(`Backend proxy: http://localhost:${port}/proxy/* → ${backendOrigin}/*`);
   console.log(`Provider: ${provider}`);
   if (provider === "wave") {
     console.log(`Webhook HMAC secret (WAVE_WEBHOOK_SECRET): ${secret}`);
@@ -60,6 +62,7 @@ export async function devCommand(options: DevCommandOptions): Promise<void> {
 
 export function createDevServer(target: string, provider: DevProvider = "wave"): Server {
   const webhookTarget = validateTarget(target);
+  const backendOrigin = webhookTarget.origin;
   const sessions = new Map<string, CheckoutSession>();
   const handleMock = createProviderMocks();
 
@@ -78,6 +81,14 @@ export function createDevServer(target: string, provider: DevProvider = "wave"):
 
     try {
       if (await handleMock(request, response, url)) return;
+
+      // Transparent proxy: forward /proxy/* to the backend applicatif
+      const proxyMatch = url.pathname.match(/^\/proxy(\/.*)?$/);
+      if (proxyMatch !== null) {
+        await proxyRequest(request, response, backendOrigin, proxyMatch[1] ?? "/");
+        return;
+      }
+
       if (request.method === "POST" && url.pathname === "/v1/checkout/sessions") {
         await createCheckoutSession(request, response, sessions);
         return;
@@ -220,6 +231,50 @@ function buildProviderWebhookBody(
 function parseSimulation(value: unknown): Simulation {
   if (value === "success" || value === "insufficient_funds" || value === "cancelled") return value;
   throw new Error("Invalid simulation result.");
+}
+
+async function proxyRequest(
+  request: IncomingMessage,
+  response: ServerResponse,
+  backendOrigin: string,
+  path: string,
+): Promise<void> {
+  const targetUrl = `${backendOrigin}${path}`;
+  let rawBody = "";
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    for await (const chunk of request) {
+      rawBody += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+      if (Buffer.byteLength(rawBody) > MAX_REQUEST_SIZE) {
+        sendJson(response, 413, { error: "Request body is too large." });
+        return;
+      }
+    }
+  }
+
+  const forwardHeaders: Record<string, string> = { "content-type": "application/json" };
+  const contentType = request.headers["content-type"];
+  if (typeof contentType === "string") forwardHeaders["content-type"] = contentType;
+
+  try {
+    const upstream = await fetch(targetUrl, {
+      method: request.method ?? "GET",
+      headers: forwardHeaders,
+      body: rawBody.length > 0 ? rawBody : null,
+    });
+
+    const body = await upstream.text();
+    response.writeHead(upstream.status, {
+      "content-type": upstream.headers.get("content-type") ?? "application/json; charset=utf-8",
+    });
+    response.end(body);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Proxy error";
+    sendJson(response, 502, {
+      error: "Backend inaccessible",
+      detail: message,
+      target: targetUrl,
+    });
+  }
 }
 
 async function readJson<T>(request: IncomingMessage): Promise<T> {
