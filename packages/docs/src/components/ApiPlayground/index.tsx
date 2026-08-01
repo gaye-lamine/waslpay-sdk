@@ -115,7 +115,26 @@ export default function ApiPlayground(): React.JSX.Element {
         setResponseBody(text);
       }
     } catch (err: any) {
-      setError(err.message || "Erreur de connexion HTTP");
+      const raw: string = err?.message ?? "";
+      let diagnostic: string;
+      if (raw.includes("Failed to fetch") || raw.includes("fetch failed") || raw.includes("NetworkError") || raw.includes("ERR_CONNECTION_REFUSED")) {
+        const serverLabel = mode === "mock"
+          ? `le serveur mock WaslPay CLI (${mockUrl})`
+          : `votre serveur backend (${targetUrl})`;
+        const startCmd = mode === "mock"
+          ? "`npx @waslpay/cli dev --target <url-webhook>`"
+          : "`uvicorn waslpay-integration:app --port 8000` (Python) ou `node index.js` (Node.js)";
+        diagnostic = `Le serveur cible est inaccessible. Vérifiez que ${serverLabel} est démarré.\n\nCommande de démarrage : ${startCmd}\n\nSi le serveur est démarré mais l\'erreur persiste, vérifiez que le middleware CORS est activé sur votre backend (Access-Control-Allow-Origin manquant).`;
+      } else if (raw.includes("CORS") || raw.includes("cross-origin") || raw.includes("Access-Control") || raw.includes("blocked")) {
+        diagnostic = `Requête bloquée par la politique CORS du navigateur.\n\nVotre serveur backend doit retourner l\'en-tête :\n  Access-Control-Allow-Origin: *\n\nPour FastAPI : ajoutez CORSMiddleware.\nPour Express : utilisez le middleware cors().`;
+      } else if (raw.includes("ERR_NAME_NOT_RESOLVED") || raw.includes("getaddrinfo") || raw.includes("DNS")) {
+        diagnostic = `URL invalide ou inaccessible : "${fullUrl}".\n\nVérifiez l\'URL cible saisie. En développement local, utilisez http://localhost:<port>.`;
+      } else if (raw.includes("timeout") || raw.includes("ETIMEDOUT") || raw.includes("AbortError")) {
+        diagnostic = `La requête a dépassé le délai d\'attente (timeout).\n\nVotre serveur a peut-être planté ou est surchargé. Vérifiez les logs de votre backend.`;
+      } else {
+        diagnostic = raw || "Erreur réseau inattendue.";
+      }
+      setError(diagnostic);
     } finally {
       setLoading(false);
     }
@@ -308,8 +327,9 @@ export default function ApiPlayground(): React.JSX.Element {
           </div>
 
           {error && (
-            <div style={{ background: "var(--ifm-color-danger-contrast-background)", color: "var(--ifm-color-danger)", padding: "0.6rem 0.8rem", borderRadius: "4px", fontSize: "0.85rem" }}>
-              <strong>Erreur :</strong> {error}
+            <div style={{ background: "var(--ifm-color-danger-contrast-background)", color: "var(--ifm-color-danger)", padding: "0.75rem 1rem", borderRadius: "4px", fontSize: "0.85rem", lineHeight: "1.6" }}>
+              <strong style={{ display: "block", marginBottom: "0.4rem" }}>Diagnostic d\'erreur</strong>
+              <pre style={{ margin: 0, whiteSpace: "pre-wrap", background: "transparent", fontSize: "0.82rem", fontFamily: "inherit", color: "inherit" }}>{error}</pre>
             </div>
           )}
 
