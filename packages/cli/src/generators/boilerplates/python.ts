@@ -186,9 +186,12 @@ export function generatePythonBoilerplate(framework: PythonFramework, providers:
     return `${header}
 import os
 import httpx
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from waslpay import WaslPay, PaymentRequest
 ${imports}
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -202,10 +205,13 @@ ${fastapiRoutes(providers, multi)}
   return `${header}
 import os
 import httpx
+from dotenv import load_dotenv
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from waslpay import WaslPay, PaymentRequest
 ${imports}
+
+load_dotenv()
 
 ${blocks}
 
