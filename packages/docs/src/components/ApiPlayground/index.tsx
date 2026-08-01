@@ -4,20 +4,33 @@ type Provider = "wave" | "orange-money" | "mtn-momo";
 type Action = "checkout" | "checkStatus" | "triggerWebhook" | "refund";
 type Mode = "backend" | "mock";
 
+// Actions disponibles selon le mode
+const ACTIONS_BACKEND: { value: Action; label: string }[] = [
+  { value: "checkout",       label: "Initiate Payment" },
+  { value: "checkStatus",    label: "Check Status" },
+  { value: "triggerWebhook", label: "Simuler Webhook" },
+  { value: "refund",         label: "Remboursement" },
+];
+const ACTIONS_SANDBOX: { value: Action; label: string }[] = [
+  { value: "checkout",    label: "Initiate Payment" },
+  { value: "checkStatus", label: "Check Status" },
+  { value: "refund",      label: "Remboursement" },
+];
+
 export default function ApiPlayground(): React.JSX.Element {
   const [devPort, setDevPort] = useState(4004);
-  const [mode, setMode] = useState<Mode>("backend");
+  const [mode, setMode] = useState<Mode>("mock");
   const [provider, setProvider] = useState<Provider>("wave");
   const [action, setAction] = useState<Action>("checkout");
 
-  // Form inputs
+  // Champs du formulaire
   const [amount, setAmount] = useState(1000);
   const [reference, setReference] = useState("order-123");
   const [customerPhone, setCustomerPhone] = useState("+221770000000");
   const [sessionId, setSessionId] = useState("");
   const [webhookOutcome, setWebhookOutcome] = useState<"success" | "failed">("success");
 
-  // Response state
+  // État de la réponse
   const [loading, setLoading] = useState(false);
   const [responseStatus, setResponseStatus] = useState<string | null>(null);
   const [responseBody, setResponseBody] = useState<string | null>(null);
@@ -26,51 +39,86 @@ export default function ApiPlayground(): React.JSX.Element {
 
   const devBase = `http://localhost:${devPort}`;
 
-  // Build request URL from mode + action + provider
-  function buildRequest(): { url: string; method: string; body: string | undefined } {
+  // Quand on change de mode, réinitialiser l'action si elle n'est plus disponible
+  function handleModeChange(m: Mode) {
+    setMode(m);
+    if (m === "mock" && action === "triggerWebhook") setAction("checkout");
+  }
+
+  // Générer un x-reference-id stable pour MTN dans la session courante
+  const [mtnRefId] = useState(() => crypto.randomUUID());
+
+  function buildRequest(): { url: string; method: string; body: string | undefined; extraHeaders?: Record<string, string> } {
     let method = "POST";
     let url = devBase;
-    let body: string | undefined = undefined;
+    let body: string | undefined;
+    let extraHeaders: Record<string, string> | undefined;
     const sid = sessionId || "session_demo";
 
     if (mode === "backend") {
-      // All backend calls go through the proxy
-      if (action === "checkout") {
-        url += `/proxy/checkout/${provider}`;
-        body = JSON.stringify({ amount, reference, customer_phone: customerPhone });
-      } else if (action === "checkStatus") {
-        method = "GET";
-        url += `/proxy/checkout/${provider}/${sid}`;
-      } else if (action === "triggerWebhook") {
-        url += `/proxy/api/webhooks/waslpay/${provider}`;
-        body = buildWebhookBody();
-      } else {
-        url += `/proxy/refund/${provider}/${sid}`;
-        body = JSON.stringify({ amount });
+      switch (action) {
+        case "checkout":
+          url += `/proxy/checkout/${provider}`;
+          body = JSON.stringify({ amount, reference, customer_phone: customerPhone });
+          break;
+        case "checkStatus":
+          method = "GET";
+          url += `/proxy/checkout/${provider}/${sid}`;
+          break;
+        case "triggerWebhook":
+          url += `/proxy/api/webhooks/waslpay/${provider}`;
+          body = buildWebhookBody();
+          break;
+        case "refund":
+          url += `/proxy/refund/${provider}/${sid}`;
+          body = JSON.stringify({ amount });
+          break;
       }
     } else {
-      // Mock routes directly on waslpay dev
-      if (action === "checkout") {
-        if (provider === "wave") { url += "/mock/wave/checkout/sessions"; body = JSON.stringify({ client_reference: reference, amount }); }
-        else if (provider === "orange-money") { url += "/mock/orange/v1/onlinePayment/prepare"; body = JSON.stringify({ reference, amount }); }
-        else { url += "/mock/mtn/collection/v1_0/requesttopay"; body = JSON.stringify({ externalId: reference, amount: String(amount) }); }
-      } else if (action === "checkStatus") {
-        method = "GET";
-        if (provider === "wave") url += `/mock/wave/checkout/sessions/${sid}`;
-        else if (provider === "orange-money") url += `/mock/orange/api/eWallet/v1/transactions?reference=${reference}`;
-        else url += `/mock/mtn/collection/v1_0/requesttopay/${sid}`;
-      } else if (action === "triggerWebhook") {
-        // Webhook is always against the backend via waslpay dev standard route
-        url += `/proxy/api/webhooks/waslpay/${provider}`;
-        body = buildWebhookBody();
-      } else {
-        if (provider === "wave") { url += `/mock/wave/checkout/sessions/${sid}/refund`; body = JSON.stringify({ amount }); }
-        else if (provider === "orange-money") { url += `/mock/orange/v1/refund`; body = JSON.stringify({ reference, amount }); }
-        else { url += `/mock/mtn/collection/v1_0/refund`; body = JSON.stringify({ externalId: reference, amount: String(amount) }); }
+      // Mode Sandbox : appels directs au mock
+      switch (action) {
+        case "checkout":
+          if (provider === "wave") {
+            url += "/mock/wave/checkout/sessions";
+            body = JSON.stringify({ client_reference: reference, amount });
+          } else if (provider === "orange-money") {
+            url += "/mock/orange/v1/onlinePayment/prepare";
+            body = JSON.stringify({ reference, amount });
+          } else {
+            url += "/mock/mtn/collection/v1_0/requesttopay";
+            body = JSON.stringify({ externalId: reference, amount: String(amount), currency: "EUR" });
+            extraHeaders = { "x-reference-id": mtnRefId };
+          }
+          break;
+        case "checkStatus":
+          method = "GET";
+          if (provider === "wave") {
+            url += `/mock/wave/checkout/sessions/${sid}`;
+          } else if (provider === "orange-money") {
+            url += `/mock/orange/api/eWallet/v1/transactions?reference=${encodeURIComponent(reference)}`;
+          } else {
+            url += `/mock/mtn/collection/v1_0/requesttopay/${sid}`;
+          }
+          break;
+        case "refund":
+          if (provider === "wave") {
+            url += `/mock/wave/checkout/sessions/${sid}/refund`;
+            body = JSON.stringify({ amount });
+          } else if (provider === "orange-money") {
+            url += "/mock/orange/v1/refund";
+            body = JSON.stringify({ reference, amount });
+          } else {
+            url += "/mock/mtn/collection/v1_0/refund";
+            body = JSON.stringify({ externalId: reference, amount: String(amount) });
+          }
+          break;
+        case "triggerWebhook":
+          // Non disponible en sandbox
+          break;
       }
     }
 
-    return { url, method, body };
+    return { url, method, body, extraHeaders };
   }
 
   function buildWebhookBody(): string {
@@ -112,17 +160,16 @@ export default function ApiPlayground(): React.JSX.Element {
 
     const start = performance.now();
     try {
-      const { url, method: m, body } = buildRequest();
+      const { url, method: m, body, extraHeaders } = buildRequest();
       const res = await fetch(url, {
         method: m,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...extraHeaders },
         body,
       });
       const elapsed = Math.round(performance.now() - start);
       setElapsedTime(elapsed);
       setResponseStatus(`${res.status} ${res.statusText}`);
 
-      // 502 from proxy means backend is down
       if (res.status === 502) {
         const data = await res.json().catch(() => ({}));
         const target: string = (data as any)?.target ?? "";
@@ -137,19 +184,30 @@ export default function ApiPlayground(): React.JSX.Element {
       }
 
       const text = await res.text();
+      let parsed: any;
       try {
-        setResponseBody(JSON.stringify(JSON.parse(text), null, 2));
+        parsed = JSON.parse(text);
+        setResponseBody(JSON.stringify(parsed, null, 2));
       } catch {
         setResponseBody(text);
       }
+
+      // Auto-remplir l'ID de session depuis une réponse de checkout réussie
+      if (action === "checkout" && res.ok && parsed) {
+        const autoId: string | undefined =
+          parsed.id ??                          // Wave
+          parsed.referenceId ??                 // generic
+          (provider === "mtn-momo" ? mtnRefId : undefined);  // MTN: on utilise le x-reference-id envoyé
+        if (autoId) setSessionId(autoId);
+      }
+
     } catch (err: any) {
       const raw: string = err?.message ?? "";
       if (raw.includes("Failed to fetch") || raw.includes("fetch failed") || raw.includes("NetworkError")) {
         setError(
           `Impossible de joindre le serveur mock WaslPay sur ${devBase}.\n\n` +
-          `Démarrez-le dans un terminal avec :\n` +
+          `Démarrez-le dans un terminal :\n` +
           `  npx @waslpay/cli dev --target http://localhost:8000/api/webhooks/waslpay\n\n` +
-          `Le serveur mock doit être actif sur le port ${devPort} pour que le Playground puisse l'atteindre.\n\n` +
           `Note : http://localhost est autorisé depuis une page HTTPS (exception navigateur pour le développement local).`
         );
       } else {
@@ -167,54 +225,23 @@ export default function ApiPlayground(): React.JSX.Element {
   };
   const labelStyle: React.CSSProperties = { display: "block", fontWeight: "600", fontSize: "0.8rem", marginBottom: "0.25rem" };
 
+  const availableActions = mode === "mock" ? ACTIONS_SANDBOX : ACTIONS_BACKEND;
+  const needsSessionId = (action === "checkStatus" || action === "refund" || action === "triggerWebhook") &&
+    !(action === "checkStatus" && provider === "orange-money");
+
   return (
     <div style={{ border: "1px solid var(--ifm-color-emphasis-300)", borderRadius: "8px", padding: "1.25rem", marginBottom: "2rem", background: "var(--ifm-card-background-color)" }}>
       <h3 style={{ marginTop: 0, color: "var(--ifm-color-primary)", fontSize: "1.1rem" }}>Playground WaslPay SDK</h3>
 
-      {/* Prerequisite notice */}
-      <div style={{ background: "var(--ifm-color-emphasis-100)", borderLeft: "3px solid var(--ifm-color-primary)", padding: "0.6rem 0.8rem", borderRadius: "0 4px 4px 0", marginBottom: "1.25rem", fontSize: "0.82rem" }}>
-        <strong>Mode "Mon application" :</strong> démarrez le serveur mock WaslPay dans votre terminal :{" "}
-        <code style={{ fontSize: "0.8rem" }}>npx @waslpay/cli dev --target http://localhost:8000/api/webhooks/waslpay</code>
-        <br />
-        <strong>Mode "Sandbox" :</strong> aucun prérequis — le mock WaslPay doit tourner sur le port {devPort}.
-      </div>
-
-      {/* Dev port + mode row */}
-      <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
-        <div>
-          <label style={labelStyle}>Port waslpay dev</label>
-          <input type="number" value={devPort} onChange={(e) => setDevPort(Number(e.target.value))} style={inputStyle} />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Fournisseur</label>
-          <select value={provider} onChange={(e) => setProvider(e.target.value as Provider)} style={inputStyle}>
-            <option value="wave">Wave Sénégal</option>
-            <option value="orange-money">Orange Money Sénégal</option>
-            <option value="mtn-momo">MTN MoMo</option>
-          </select>
-        </div>
-
-        <div>
-          <label style={labelStyle}>Action</label>
-          <select value={action} onChange={(e) => setAction(e.target.value as Action)} style={inputStyle}>
-            <option value="checkout">Initiate Payment</option>
-            <option value="checkStatus">Check Status</option>
-            <option value="triggerWebhook">Simuler Webhook</option>
-            <option value="refund">Remboursement</option>
-          </select>
-        </div>
-      </div>
-
       {/* Mode toggle */}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
         {([
-          { key: "backend" as Mode, label: "Mon application" },
           { key: "mock"    as Mode, label: "Sandbox (sans backend)" },
+          { key: "backend" as Mode, label: "Mon application" },
         ]).map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setMode(key)}
+            onClick={() => handleModeChange(key)}
             style={{
               padding: "0.3rem 0.75rem", borderRadius: "4px", fontSize: "0.82rem", fontWeight: "600", cursor: "pointer",
               border: "1px solid var(--ifm-color-emphasis-400)",
@@ -227,7 +254,48 @@ export default function ApiPlayground(): React.JSX.Element {
         ))}
       </div>
 
-      {/* Dynamic fields */}
+      {/* Notice contextuelle selon le mode */}
+      <div style={{ background: "var(--ifm-color-emphasis-100)", borderLeft: "3px solid var(--ifm-color-primary)", padding: "0.55rem 0.8rem", borderRadius: "0 4px 4px 0", marginBottom: "1.25rem", fontSize: "0.82rem" }}>
+        {mode === "mock" ? (
+          <>
+            <strong>Prérequis :</strong>{" "}
+            <code style={{ fontSize: "0.8rem" }}>npx @waslpay/cli dev --target http://localhost:8000/api/webhooks/waslpay</code>
+            {" "}— Commencez par <strong>Initiate Payment</strong> : l'ID de session sera automatiquement copié pour les étapes suivantes.
+          </>
+        ) : (
+          <>
+            <strong>Prérequis :</strong> votre backend doit être démarré sur{" "}
+            <code style={{ fontSize: "0.8rem" }}>http://localhost:8000</code> et le mock WaslPay sur le port {devPort}.{" "}
+            <code style={{ fontSize: "0.8rem" }}>npx @waslpay/cli dev --target http://localhost:8000/api/webhooks/waslpay</code>
+          </>
+        )}
+      </div>
+
+      {/* Ligne port + provider + action */}
+      <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
+        <div>
+          <label style={labelStyle}>Port</label>
+          <input type="number" value={devPort} onChange={(e) => setDevPort(Number(e.target.value))} style={inputStyle} />
+        </div>
+        <div>
+          <label style={labelStyle}>Fournisseur</label>
+          <select value={provider} onChange={(e) => setProvider(e.target.value as Provider)} style={inputStyle}>
+            <option value="wave">Wave Sénégal</option>
+            <option value="orange-money">Orange Money</option>
+            <option value="mtn-momo">MTN MoMo</option>
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Action</label>
+          <select value={action} onChange={(e) => setAction(e.target.value as Action)} style={inputStyle}>
+            {availableActions.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Champs dynamiques */}
       <div style={{ background: "var(--ifm-color-emphasis-100)", padding: "0.8rem 1rem", borderRadius: "6px", marginBottom: "1.25rem" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "0.8rem" }}>
           {(action === "checkout" || action === "refund") && (
@@ -236,7 +304,7 @@ export default function ApiPlayground(): React.JSX.Element {
               <input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} style={inputStyle} />
             </div>
           )}
-          {(action === "checkout" || action === "triggerWebhook" || (action === "checkStatus" && provider === "orange-money")) && (
+          {(action === "checkout" || action === "triggerWebhook" || (action === "checkStatus" && provider === "orange-money") || (action === "refund" && provider === "orange-money")) && (
             <div>
               <label style={labelStyle}>Référence commande</label>
               <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} style={inputStyle} />
@@ -248,10 +316,23 @@ export default function ApiPlayground(): React.JSX.Element {
               <input type="text" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} style={inputStyle} />
             </div>
           )}
-          {(action === "checkStatus" || action === "refund" || action === "triggerWebhook") && provider !== "orange-money" && (
+          {needsSessionId && (
             <div>
-              <label style={labelStyle}>ID de session / transaction</label>
-              <input type="text" placeholder={`ex: ${provider === "wave" ? "wave_0cbdb603..." : "ref_abc123..."}`} value={sessionId} onChange={(e) => setSessionId(e.target.value)} style={inputStyle} />
+              <label style={labelStyle}>
+                ID de session
+                {sessionId === "" && action !== "checkout" && (
+                  <span style={{ fontWeight: 400, color: "var(--ifm-color-warning)", marginLeft: "0.4rem", fontSize: "0.75rem" }}>
+                    — lancez d'abord un Initiate Payment
+                  </span>
+                )}
+              </label>
+              <input
+                type="text"
+                placeholder={provider === "mtn-momo" ? mtnRefId : `ex: ${provider === "wave" ? "wave_0cbdb603..." : "ref_abc123..."}`}
+                value={sessionId}
+                onChange={(e) => setSessionId(e.target.value)}
+                style={{ ...inputStyle, ...(sessionId === "" ? { borderColor: "var(--ifm-color-warning)" } : {}) }}
+              />
             </div>
           )}
           {action === "triggerWebhook" && (
@@ -266,7 +347,7 @@ export default function ApiPlayground(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Request preview */}
+      {/* Aperçu de la requête */}
       <div style={{ background: "var(--ifm-pre-background)", padding: "0.5rem 0.8rem", borderRadius: "4px", marginBottom: "1rem", fontFamily: "monospace", fontSize: "0.82rem", wordBreak: "break-all" }}>
         <span style={{ color: method === "GET" ? "#2e7d32" : "#1565c0", fontWeight: "bold", marginRight: "0.5rem" }}>{method}</span>
         <span>{fullUrl}</span>
