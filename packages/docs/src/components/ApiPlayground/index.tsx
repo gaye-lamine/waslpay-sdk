@@ -173,10 +173,10 @@ export default function ApiPlayground(): React.JSX.Element {
 
       {/* Prerequisite notice */}
       <div style={{ background: "var(--ifm-color-emphasis-100)", borderLeft: "3px solid var(--ifm-color-primary)", padding: "0.6rem 0.8rem", borderRadius: "0 4px 4px 0", marginBottom: "1.25rem", fontSize: "0.82rem" }}>
-        <strong>Prérequis :</strong> Démarrez le serveur mock WaslPay dans votre terminal :{" "}
+        <strong>Mode "Mon application" :</strong> démarrez le serveur mock WaslPay dans votre terminal :{" "}
         <code style={{ fontSize: "0.8rem" }}>npx @waslpay/cli dev --target http://localhost:8000/api/webhooks/waslpay</code>
         <br />
-        Toutes les requêtes du Playground transitent par <code>localhost:{devPort}</code> — le mock ajoute les entêtes CORS et proxifie vers votre backend.
+        <strong>Mode "Sandbox" :</strong> aucun prérequis — le mock WaslPay doit tourner sur le port {devPort}.
       </div>
 
       {/* Dev port + mode row */}
@@ -208,18 +208,21 @@ export default function ApiPlayground(): React.JSX.Element {
 
       {/* Mode toggle */}
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
-        {(["backend", "mock"] as Mode[]).map((m) => (
+        {([
+          { key: "backend" as Mode, label: "Mon application" },
+          { key: "mock"    as Mode, label: "Sandbox (sans backend)" },
+        ]).map(({ key, label }) => (
           <button
-            key={m}
-            onClick={() => setMode(m)}
+            key={key}
+            onClick={() => setMode(key)}
             style={{
               padding: "0.3rem 0.75rem", borderRadius: "4px", fontSize: "0.82rem", fontWeight: "600", cursor: "pointer",
               border: "1px solid var(--ifm-color-emphasis-400)",
-              background: mode === m ? "var(--ifm-color-primary)" : "transparent",
-              color: mode === m ? "#fff" : "inherit",
+              background: mode === key ? "var(--ifm-color-primary)" : "transparent",
+              color: mode === key ? "#fff" : "inherit",
             }}
           >
-            {m === "backend" ? "Backend applicatif (via proxy)" : "Mock WaslPay direct"}
+            {label}
           </button>
         ))}
       </div>
