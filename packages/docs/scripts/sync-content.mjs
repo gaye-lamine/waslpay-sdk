@@ -12,7 +12,7 @@ await mkdir(dirname(capabilitiesDestination), { recursive: true });
 const content = await readFile(source, "utf8");
 const publicContent = content.replace(
   "](spec/provider-interface.md)",
-  "](https://github.com/gaye-lamine/waslpay/blob/main/spec/provider-interface.md)",
+  "](https://github.com/gaye-lamine/waslpay-sdk/blob/main/spec/provider-interface.md)",
 );
 const capabilitiesMatch = content.match(
   /^## Capacités par provider \(identiques dans les 3 langages\)\r?\n\r?\n(?<table>(?:\|.*\r?\n)+)/m,

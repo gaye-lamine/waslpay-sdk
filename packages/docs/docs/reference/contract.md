@@ -88,4 +88,4 @@ const fullRefund = await waslPay.refund(session.id);
 ```
 
 La spécification complète et normative est disponible dans
-[provider-interface.md](https://github.com/gaye-lamine/waslpay/blob/main/spec/provider-interface.md).
+[provider-interface.md](https://github.com/gaye-lamine/waslpay-sdk/blob/main/spec/provider-interface.md).

@@ -166,4 +166,4 @@ La commande utilise le code de sortie `1` lorsque la réponse HTTP n'est pas un
 succès ou lorsque l'envoi réseau échoue.
 
 Pour les détails de développement et les exemples additionnels, consultez le
-[README de la CLI](https://github.com/gaye-lamine/waslpay/tree/main/packages/cli).
+[README de la CLI](https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/cli).
