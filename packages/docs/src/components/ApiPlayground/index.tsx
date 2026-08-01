@@ -103,29 +103,29 @@ export default function ApiPlayground(): React.JSX.Element {
   };
 
   return (
-    <div style={{ border: "1px solid var(--ifm-color-emphasis-300)", borderRadius: "10px", padding: "1.5rem", marginBottom: "2rem", background: "var(--ifm-card-background-color)" }}>
-      <h3 style={{ marginTop: 0, color: "var(--ifm-color-primary)" }}>🧪 Playground WaslPay SDK</h3>
-      <p style={{ fontSize: "0.95rem", opacity: 0.9 }}>
-        Testez en direct les endpoints de votre application backend locale (FastAPI, Express, Laravel) ou du serveur mock WaslPay.
+    <div style={{ border: "1px solid var(--ifm-color-emphasis-300)", borderRadius: "8px", padding: "1.25rem", marginBottom: "2rem", background: "var(--ifm-card-background-color)" }}>
+      <h3 style={{ marginTop: 0, color: "var(--ifm-color-primary)", fontSize: "1.2rem" }}>Playground WaslPay SDK</h3>
+      <p style={{ fontSize: "0.9rem", opacity: 0.9, marginBottom: "1.25rem" }}>
+        Exécution directe de requêtes HTTP sur votre serveur backend local ou sur le mock WaslPay.
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "1.25rem" }}>
         <div>
-          <label style={{ display: "block", fontWeight: "bold", marginBottom: "0.4rem" }}>URL Backend Cible :</label>
+          <label style={{ display: "block", fontWeight: "600", fontSize: "0.85rem", marginBottom: "0.3rem" }}>URL Cible</label>
           <input
             type="text"
             value={targetUrl}
             onChange={(e) => setTargetUrl(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem", borderRadius: "6px", border: "1px solid var(--ifm-color-emphasis-400)" }}
+            style={{ width: "100%", padding: "0.45rem 0.6rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)", fontSize: "0.9rem" }}
           />
         </div>
 
         <div>
-          <label style={{ display: "block", fontWeight: "bold", marginBottom: "0.4rem" }}>Provider :</label>
+          <label style={{ display: "block", fontWeight: "600", fontSize: "0.85rem", marginBottom: "0.3rem" }}>Fournisseur</label>
           <select
             value={provider}
             onChange={(e) => setProvider(e.target.value as Provider)}
-            style={{ width: "100%", padding: "0.5rem", borderRadius: "6px", border: "1px solid var(--ifm-color-emphasis-400)" }}
+            style={{ width: "100%", padding: "0.45rem 0.6rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)", fontSize: "0.9rem" }}
           >
             <option value="wave">Wave Sénégal</option>
             <option value="orange-money">Orange Money Sénégal</option>
@@ -134,11 +134,11 @@ export default function ApiPlayground(): React.JSX.Element {
         </div>
 
         <div>
-          <label style={{ display: "block", fontWeight: "bold", marginBottom: "0.4rem" }}>Action à exécuter :</label>
+          <label style={{ display: "block", fontWeight: "600", fontSize: "0.85rem", marginBottom: "0.3rem" }}>Action</label>
           <select
             value={action}
             onChange={(e) => setAction(e.target.value as Action)}
-            style={{ width: "100%", padding: "0.5rem", borderRadius: "6px", border: "1px solid var(--ifm-color-emphasis-400)" }}
+            style={{ width: "100%", padding: "0.45rem 0.6rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)", fontSize: "0.9rem" }}
           >
             <option value="checkout">Initiate Payment (POST /checkout)</option>
             <option value="checkStatus">Check Status (GET /mock/status)</option>
@@ -148,66 +148,65 @@ export default function ApiPlayground(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Dynamic parameters */}
-      <div style={{ background: "var(--ifm-color-emphasis-100)", padding: "1rem", borderRadius: "8px", marginBottom: "1.5rem" }}>
-        <h4 style={{ marginTop: 0, marginBottom: "0.8rem" }}>Paramètres de la requête :</h4>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+      <div style={{ background: "var(--ifm-color-emphasis-100)", padding: "1rem", borderRadius: "6px", marginBottom: "1.25rem" }}>
+        <h4 style={{ marginTop: 0, marginBottom: "0.75rem", fontSize: "0.95rem" }}>Paramètres de la requête</h4>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.8rem" }}>
           {(action === "checkout" || action === "refund") && (
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "bold" }}>Montant (XOF) :</label>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600" }}>Montant (XOF)</label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
-                style={{ width: "100%", padding: "0.4rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)" }}
+                style={{ width: "100%", padding: "0.35rem 0.5rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)", fontSize: "0.85rem" }}
               />
             </div>
           )}
 
           {(action === "checkout" || action === "triggerWebhook") && (
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "bold" }}>Référence Commande :</label>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600" }}>Référence</label>
               <input
                 type="text"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                style={{ width: "100%", padding: "0.4rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)" }}
+                style={{ width: "100%", padding: "0.35rem 0.5rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)", fontSize: "0.85rem" }}
               />
             </div>
           )}
 
           {action === "checkout" && (
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "bold" }}>Téléphone client :</label>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600" }}>Téléphone client</label>
               <input
                 type="text"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                style={{ width: "100%", padding: "0.4rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)" }}
+                style={{ width: "100%", padding: "0.35rem 0.5rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)", fontSize: "0.85rem" }}
               />
             </div>
           )}
 
           {(action === "checkStatus" || action === "refund" || action === "triggerWebhook") && (
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "bold" }}>Session ID / ID Transaction :</label>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600" }}>ID de session</label>
               <input
                 type="text"
                 placeholder="ex: wave_0cbdb603..."
                 value={sessionId}
                 onChange={(e) => setSessionId(e.target.value)}
-                style={{ width: "100%", padding: "0.4rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)" }}
+                style={{ width: "100%", padding: "0.35rem 0.5rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)", fontSize: "0.85rem" }}
               />
             </div>
           )}
 
           {action === "triggerWebhook" && (
             <div>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "bold" }}>Résultat Webhook :</label>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600" }}>Résultat</label>
               <select
                 value={webhookOutcome}
                 onChange={(e) => setWebhookOutcome(e.target.value as "success" | "failed")}
-                style={{ width: "100%", padding: "0.4rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)" }}
+                style={{ width: "100%", padding: "0.35rem 0.5rem", borderRadius: "4px", border: "1px solid var(--ifm-color-emphasis-400)", fontSize: "0.85rem" }}
               >
                 <option value="success">Success (.completed / SUCCESSFUL)</option>
                 <option value="failed">Failed (.failed / FAILED)</option>
@@ -224,36 +223,35 @@ export default function ApiPlayground(): React.JSX.Element {
           background: "var(--ifm-color-primary)",
           color: "#fff",
           border: "none",
-          padding: "0.6rem 1.4rem",
-          borderRadius: "6px",
-          fontWeight: "bold",
+          padding: "0.5rem 1.25rem",
+          borderRadius: "4px",
+          fontWeight: "600",
           cursor: loading ? "wait" : "pointer",
-          fontSize: "1rem",
+          fontSize: "0.9rem",
         }}
       >
-        {loading ? "Chargement..." : "🚀 Exécuter la requête"}
+        {loading ? "Traitement en cours..." : "Exécuter la requête"}
       </button>
 
-      {/* Response Box */}
       {(responseStatus || error || responseBody) && (
-        <div style={{ marginTop: "1.5rem", borderTop: "1px solid var(--ifm-color-emphasis-300)", paddingTop: "1rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-            <h4 style={{ margin: 0 }}>Résultat :</h4>
+        <div style={{ marginTop: "1.25rem", borderTop: "1px solid var(--ifm-color-emphasis-300)", paddingTop: "0.8rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+            <span style={{ fontWeight: "600", fontSize: "0.9rem" }}>Réponse</span>
             {responseStatus && (
-              <span style={{ padding: "0.2rem 0.6rem", borderRadius: "4px", background: responseStatus.startsWith("2") ? "#2e7d32" : "#c62828", color: "#fff", fontWeight: "bold", fontSize: "0.85rem" }}>
+              <span style={{ padding: "0.15rem 0.5rem", borderRadius: "3px", background: responseStatus.startsWith("2") ? "#2e7d32" : "#c62828", color: "#fff", fontWeight: "600", fontSize: "0.8rem" }}>
                 {responseStatus} {elapsedTime !== null && `(${elapsedTime} ms)`}
               </span>
             )}
           </div>
 
           {error && (
-            <div style={{ background: "var(--ifm-color-danger-contrast-background)", color: "var(--ifm-color-danger)", padding: "0.8rem", borderRadius: "6px", fontSize: "0.9rem" }}>
-              ⚠️ <strong>Erreur :</strong> {error}
+            <div style={{ background: "var(--ifm-color-danger-contrast-background)", color: "var(--ifm-color-danger)", padding: "0.6rem 0.8rem", borderRadius: "4px", fontSize: "0.85rem" }}>
+              <strong>Erreur :</strong> {error}
             </div>
           )}
 
           {responseBody && (
-            <pre style={{ background: "var(--ifm-pre-background)", padding: "1rem", borderRadius: "6px", overflowX: "auto", fontSize: "0.85rem" }}>
+            <pre style={{ background: "var(--ifm-pre-background)", padding: "0.8rem", borderRadius: "4px", overflowX: "auto", fontSize: "0.8rem", margin: 0 }}>
               <code>{responseBody}</code>
             </pre>
           )}
