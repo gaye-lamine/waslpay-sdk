@@ -254,22 +254,8 @@ export default function ApiPlayground(): React.JSX.Element {
         ))}
       </div>
 
-      {/* Notice contextuelle selon le mode */}
-      <div style={{ background: "var(--ifm-color-emphasis-100)", borderLeft: "3px solid var(--ifm-color-primary)", padding: "0.55rem 0.8rem", borderRadius: "0 4px 4px 0", marginBottom: "1.25rem", fontSize: "0.82rem" }}>
-        {mode === "mock" ? (
-          <>
-            <strong>Prérequis :</strong>{" "}
-            <code style={{ fontSize: "0.8rem" }}>npx @waslpay/cli dev --target http://localhost:8000/api/webhooks/waslpay</code>
-            {" "}— Commencez par <strong>Initiate Payment</strong> : l'ID de session sera automatiquement copié pour les étapes suivantes.
-          </>
-        ) : (
-          <>
-            <strong>Prérequis :</strong> votre backend doit être démarré sur{" "}
-            <code style={{ fontSize: "0.8rem" }}>http://localhost:8000</code> et le mock WaslPay sur le port {devPort}.{" "}
-            <code style={{ fontSize: "0.8rem" }}>npx @waslpay/cli dev --target http://localhost:8000/api/webhooks/waslpay</code>
-          </>
-        )}
-      </div>
+
+
 
       {/* Ligne port + provider + action */}
       <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
