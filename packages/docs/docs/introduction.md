@@ -5,7 +5,7 @@ slug: /
 
 # WaslPay SDK
 
-WaslPay est un SDK unifié et open source permettant d'intégrer les paiements mobile money en Afrique de l'Ouest (Orange Money, Wave et MTN MoMo) à travers une API standardisée pour **Node.js**, **PHP** et **Python**.
+WaslPay est un SDK unifié permettant d'intégrer les paiements mobile money en Afrique de l'Ouest (Orange Money, Wave et MTN MoMo) à travers une API standardisée pour **Node.js**, **PHP** et **Python**.
 
 ## Le problème résolu : la fragmentation du Mobile Money
 
