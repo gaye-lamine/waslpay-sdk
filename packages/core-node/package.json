@@ -1,6 +1,6 @@
 {
   "name": "@waslpay/core-node",
-  "version": "3.0.9",
+  "version": "3.0.10",
   "type": "module",
   "homepage": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/core-node",
   "repository": {
@@ -26,3 +26,4 @@
     "vitest": "^3.0.0"
   }
 }
+

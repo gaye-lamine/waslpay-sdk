@@ -1,6 +1,6 @@
 {
   "name": "@waslpay/landing",
-  "version": "3.0.9",
+  "version": "3.0.10",
   "homepage": "https://github.com/gaye-lamine/waslpay-sdk/tree/main/packages/landing",
   "repository": {
     "type": "git",
@@ -15,3 +15,4 @@
     "test": "node --test"
   }
 }
+

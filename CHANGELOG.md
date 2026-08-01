@@ -3,6 +3,18 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.10 — 2026-08-01
+
+### Added
+
+- **CLI**: `waslpay dev` now exposes a transparent reverse-proxy at `/proxy/*` that forwards requests from the browser playground to the integrator's local backend and adds CORS headers on the response. This allows the public documentation playground (`https://gaye-lamine.github.io/waslpay-sdk/playground`) to reach `http://localhost` backends without requiring any CORS configuration on the backend side.
+- **Docs**: Interactive API Playground page added to the Docusaurus documentation (`/docs/playground`). Supports Initiate Payment, Check Status, Webhook simulation, and Refund for all three providers (Wave, Orange Money, MTN MoMo), with real-time JSON response display and precise diagnostic messages on connection failure.
+
+### Fixed
+
+- **CLI**: `waslpay dev` CORS headers are now correctly set on all responses including the OPTIONS preflight, fixing `ERR_FAILED` errors when the playground or any browser client targets the dev mock server from a different origin.
+- **CLI generators**: Generated FastAPI (Python) boilerplates now include `CORSMiddleware`; generated Express (Node.js) boilerplates now include a CORS middleware, enabling browser clients to call the generated backend without additional configuration.
+
 ## 3.0.9 — 2026-08-01
 
 ### Fixed
