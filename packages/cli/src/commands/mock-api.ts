@@ -13,7 +13,12 @@ export function createProviderMocks() {
     if (!path.startsWith("/mock/")) return false;
     const body = request.method === "GET" ? {} : await json(request);
     const send = (status: number, payload: object) => {
-      response.writeHead(status, { "content-type": "application/json" });
+      response.writeHead(status, {
+        "content-type": "application/json",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "access-control-allow-headers": "*",
+      });
       response.end(JSON.stringify(payload));
     };
     if (path === "/mock/orange/oauth/v1/token" && request.method === "POST") { send(200, { access_token: "orange_mock_token", expires_in: 3600 }); return true; }

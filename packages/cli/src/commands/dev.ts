@@ -64,6 +64,16 @@ export function createDevServer(target: string, provider: DevProvider = "wave"):
   const handleMock = createProviderMocks();
 
   return createServer(async (request, response) => {
+    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    response.setHeader("Access-Control-Allow-Headers", "*");
+
+    if (request.method === "OPTIONS") {
+      response.writeHead(204);
+      response.end();
+      return;
+    }
+
     const url = new URL(request.url ?? "/", "http://localhost");
 
     try {
