@@ -306,7 +306,7 @@ export default function ApiPlayground(): React.JSX.Element {
             <div>
               <label style={labelStyle}>
                 ID de session
-                {sessionId === "" && action !== "checkout" && (
+                {sessionId === "" && (
                   <span style={{ fontWeight: 400, color: "var(--ifm-color-warning)", marginLeft: "0.4rem", fontSize: "0.75rem" }}>
                     — lancez d'abord un Initiate Payment
                   </span>
