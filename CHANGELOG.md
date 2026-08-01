@@ -3,6 +3,12 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.9 — 2026-08-01
+
+### Fixed
+
+- **Core (Node, PHP, Python)**: PaymentEvent.error was never populated on failed webhook events across Node, PHP and Python, despite the documented contract requiring it -- found via manual end-to-end testing. The invariant (error required when status is Failed, forbidden otherwise) is now enforced at construction in all 3 languages, matching PaymentStatusResult's existing guarantee.
+
 ## 3.0.8 — 2026-07-29
 
 ### Fixed

@@ -61,6 +61,7 @@ interface OrangeWebhookPayload {
   transactionId?: string;
   reference?: string;
   status?: string;
+  code?: string | number;
   timestamp?: string;
 }
 
@@ -155,13 +156,14 @@ export class OrangeMoneyProvider implements PaymentProvider {
       );
     }
 
-    const event: PaymentEvent = {
-      id: payload.id ?? payload.transactionId ?? sessionId,
-      sessionId,
-      status: this.toPaymentStatus(payload.status ?? ""),
-      ...(payload.reference === undefined ? {} : { reference: payload.reference }),
-      occurredAt: payload.timestamp ?? new Date().toISOString(),
-    };
+    const status = this.toPaymentStatus(payload.status ?? "");
+    const ref = payload.reference === undefined ? {} : { reference: payload.reference };
+    const occurredAt = payload.timestamp ?? new Date().toISOString();
+    const id = payload.id ?? payload.transactionId ?? sessionId;
+
+    const event: PaymentEvent = status === PaymentStatus.Failed
+      ? { id, sessionId, status: PaymentStatus.Failed, ...ref, occurredAt, error: this.mapErrorCode(payload.code ?? "UNKNOWN") }
+      : { id, sessionId, status, ...ref, occurredAt };
     return this.webhookEventStore.record(event);
   }
 

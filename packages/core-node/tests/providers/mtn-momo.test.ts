@@ -56,6 +56,16 @@ const fixture: ProviderContractFixture = {
       status: PaymentStatus.Success, occurredAt: "2026-07-21T12:00:00.000Z",
     },
   },
+  failedWebhook: {
+    rawBody: JSON.stringify({
+      id: "mtn-session-failed", referenceId: "mtn-session-failed", externalId: "contract-failed", status: "FAILED", code: "NOT_ENOUGH_FUNDS", timestamp: "2026-07-21T12:00:00.000Z",
+    }),
+    headers: { "Ocp-Apim-Subscription-Key": SUBSCRIPTION_KEY },
+    expectedEvent: {
+      id: "mtn-session-failed", sessionId: "mtn-session-failed", reference: "contract-failed",
+      status: PaymentStatus.Failed, occurredAt: "2026-07-21T12:00:00.000Z", error: PaymentError.InsufficientFunds,
+    },
+  },
   invalidWebhook: { rawBody: '{"status":"SUCCESSFUL"}', headers: { "ocp-apim-subscription-key": "invalid-key" } },
   refund: { sessionId: "mtn-session-success", originalAmount: 1_000, unusualOriginalSessionId: "mtn-session-unusual", unusualOriginalAmount: Number.MAX_SAFE_INTEGER, partialAmount: 500, fullAmount: 1_000, supported: true, status: PaymentStatus.Pending },
   expiration: { sessionId: "mtn-session-expired-unsupported", supported: false },

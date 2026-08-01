@@ -45,14 +45,23 @@ export type PaymentStatusResult =
       error: PaymentError;
     };
 
-export interface PaymentEvent {
-  id: string;
-  sessionId: string;
-  status: PaymentStatus;
-  reference?: string;
-  occurredAt: string;
-  error?: PaymentError;
-}
+export type PaymentEvent =
+  | {
+      id: string;
+      sessionId: string;
+      status: PaymentStatus.Pending | PaymentStatus.Success | PaymentStatus.Expired;
+      reference?: string;
+      occurredAt: string;
+      error?: never;
+    }
+  | {
+      id: string;
+      sessionId: string;
+      status: PaymentStatus.Failed;
+      reference?: string;
+      occurredAt: string;
+      error: PaymentError;
+    };
 
 export interface RefundResult {
   sessionId: string;

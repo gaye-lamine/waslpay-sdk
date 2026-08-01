@@ -35,6 +35,14 @@ function webhookPath(provider: Provider, multi: boolean): string {
   return multi ? `/api/webhooks/waslpay/${provider}` : "/api/webhooks/waslpay";
 }
 
+function refundPath(provider: Provider, multi: boolean): string {
+  return multi ? `/refund/${provider}/{session_id}` : "/refund/{session_id}";
+}
+
+function refundPathDjango(provider: Provider, multi: boolean): string {
+  return multi ? `/refund/${provider}/<session_id>` : "/refund/<session_id>";
+}
+
 // ---------------------------------------------------------------------------
 // Provider instantiation snippets
 // ---------------------------------------------------------------------------
@@ -97,6 +105,7 @@ function fastapiRoutes(providers: readonly Provider[], multi: boolean): string {
     const fnSuffix = multi ? `_${v}` : "";
     const chkPath = checkoutPath(p, multi);
     const wbkPath = webhookPath(p, multi);
+    const refPath = refundPath(p, multi);
 
     routes.push(`@app.post("${chkPath}")
 async def create_checkout${fnSuffix}():
@@ -112,7 +121,12 @@ async def create_checkout${fnSuffix}():
 async def webhook${fnSuffix}(request: Request):
     raw_body = await request.body()
     event = await ${waslpayVar}.handle_webhook(raw_body, dict(request.headers))
-    return {"event_id": event.id}`);
+    return {"event_id": event.id}
+
+@app.post("${refPath}")
+async def refund${fnSuffix}(session_id: str):
+    result = await ${waslpayVar}.refund(session_id, 1000)
+    return result`);
   }
   return routes.join("\n\n");
 }
@@ -129,6 +143,7 @@ function djangoRoutes(providers: readonly Provider[], multi: boolean): string {
     const fnSuffix = multi ? `_${v}` : "";
     const chkPath = checkoutPath(p, multi);
     const wbkPath = webhookPath(p, multi);
+    const refPath = refundPathDjango(p, multi);
 
     views.push(`# POST ${chkPath}
 @csrf_exempt
@@ -146,7 +161,13 @@ async def create_checkout${fnSuffix}(request):
 async def webhook${fnSuffix}(request):
     raw_body = request.body
     event = await ${waslpayVar}.handle_webhook(raw_body, dict(request.headers.items()))
-    return JsonResponse({"event_id": event.id})`);
+    return JsonResponse({"event_id": event.id})
+
+# POST ${refPath}
+@csrf_exempt
+async def refund${fnSuffix}(request, session_id):
+    result = await ${waslpayVar}.refund(session_id, 1000)
+    return JsonResponse({"transaction_id": result.transaction_id, "status": result.status})`);
   }
   return views.join("\n\n");
 }

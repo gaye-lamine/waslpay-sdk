@@ -41,10 +41,12 @@ final class WaveProviderTest extends AbstractProviderContract
     {
         $rawBody = '{"id":"event-1","type":"checkout.session.completed","data":{"id":"wave-1","client_reference":"contract-success","payment_status":"succeeded"}}';
         $expiredWebhook = '{"id":"event-expired","type":"checkout.session.updated","data":{"id":"wave-expired","client_reference":"contract-expired","checkout_status":"expired","payment_status":"processing","when_expires":"2026-07-22T12:00:00+00:00"}}';
+        $failedWebhook = '{"id":"event-failed","type":"checkout.session.payment_failed","data":{"id":"wave-failed","client_reference":"contract-failed","payment_status":"cancelled"}}';
         return [
             'request' => new PaymentRequest(1000, 'XOF', 'contract-success'),
             'failedSessionId' => 'contract-failed', 'failedPaymentError' => PaymentError::InsufficientFunds, 'timeoutSessionId' => 'contract-timeout',
             'validWebhook' => ['rawBody' => $rawBody, 'headers' => ['x-wave-signature' => hash_hmac('sha256', $rawBody, self::SECRET)], 'id' => 'event-1', 'sessionId' => 'wave-1', 'status' => PaymentStatus::Success],
+            'failedWebhook' => ['rawBody' => $failedWebhook, 'headers' => ['x-wave-signature' => hash_hmac('sha256', $failedWebhook, self::SECRET)], 'id' => 'event-failed', 'sessionId' => 'wave-failed', 'status' => PaymentStatus::Failed],
             'invalidWebhook' => ['rawBody' => '{}', 'headers' => ['x-wave-signature' => 'invalid']],
             'apiError' => ['sessionId' => 'wave-api-error', 'expectedError' => PaymentError::InsufficientFunds],
             'refund' => ['sessionId' => 'contract-success', 'originalAmount' => 1000, 'unusualOriginalSessionId' => 'wave-unusual', 'unusualOriginalAmount' => PHP_INT_MAX, 'partialAmount' => 500, 'fullAmount' => 1000, 'supported' => true, 'status' => PaymentStatus::Success],

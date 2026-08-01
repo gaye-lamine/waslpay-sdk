@@ -134,15 +134,14 @@ export class WaveProvider implements PaymentProvider {
       throw new WaveProviderError(PaymentError.Unknown, "Wave webhook is missing checkout session id");
     }
 
-    const event: PaymentEvent = {
-      id: payload.id ?? sessionId,
-      sessionId,
-      status: this.toWebhookStatus(payload.type, data?.checkout_status, data?.payment_status),
-      ...(data?.client_reference === null || data?.client_reference === undefined
-        ? {}
-        : { reference: data.client_reference }),
-      occurredAt: data?.when_completed ?? data?.when_expires ?? data?.when_created ?? new Date().toISOString(),
-    };
+    const status = this.toWebhookStatus(payload.type, data?.checkout_status, data?.payment_status);
+    const ref = data?.client_reference === null || data?.client_reference === undefined ? {} : { reference: data.client_reference };
+    const occurredAt = data?.when_completed ?? data?.when_expires ?? data?.when_created ?? new Date().toISOString();
+    const id = payload.id ?? sessionId;
+
+    const event: PaymentEvent = status === PaymentStatus.Failed
+      ? { id, sessionId, status: PaymentStatus.Failed, ...ref, occurredAt, error: this.mapError(200, data?.error_code) }
+      : { id, sessionId, status, ...ref, occurredAt };
     return this.webhookEventStore.record(event);
   }
 

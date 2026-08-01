@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WaslPay\Sdk\DTO;
 
+use InvalidArgumentException;
 use WaslPay\Sdk\Enums\PaymentError;
 use WaslPay\Sdk\Enums\PaymentStatus;
 
@@ -17,5 +18,12 @@ final class PaymentEvent
         public readonly ?string $reference = null,
         public readonly ?PaymentError $error = null,
     ) {
+        if ($status === PaymentStatus::Failed && $error === null) {
+            throw new InvalidArgumentException('A failed payment event requires a PaymentError.');
+        }
+
+        if ($status !== PaymentStatus::Failed && $error !== null) {
+            throw new InvalidArgumentException('Only a failed payment event may include a PaymentError.');
+        }
     }
 }

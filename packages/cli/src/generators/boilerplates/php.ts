@@ -35,6 +35,10 @@ function webhookPath(provider: Provider, multi: boolean): string {
   return multi ? `/api/webhooks/waslpay/${provider}` : "/api/webhooks/waslpay";
 }
 
+function refundPath(provider: Provider, multi: boolean): string {
+  return multi ? `/refund/${provider}/{sessionId}` : "/refund/{sessionId}";
+}
+
 // ---------------------------------------------------------------------------
 // Provider instantiation snippets
 // ---------------------------------------------------------------------------
@@ -110,6 +114,7 @@ function laravelClass(providers: readonly Provider[], multi: boolean): string {
         const waslpayVar = `$this->waslPay${suffix}`;
         const chkPath = checkoutPath(p, true);
         const wbkPath = webhookPath(p, true);
+        const refPath = refundPath(p, true);
         return `    public function checkout${suffix}()
     {
         $session = ${waslpayVar}->initiatePayment(
@@ -126,8 +131,15 @@ function laravelClass(providers: readonly Provider[], multi: boolean): string {
         );
         return response()->json(['event_id' => $event->id]);
     }
+
+    public function refund${suffix}(string $sessionId)
+    {
+        $result = ${waslpayVar}->refund($sessionId, 1000);
+        return response()->json($result);
+    }
     // Route: POST ${chkPath}  ->  checkout${suffix}()
-    // Route: POST ${wbkPath}  ->  webhook${suffix}()`;
+    // Route: POST ${wbkPath}  ->  webhook${suffix}()
+    // Route: POST ${refPath}  ->  refund${suffix}()`;
       }).join("\n\n")
     : `    public function checkout()
     {
@@ -144,6 +156,12 @@ function laravelClass(providers: readonly Provider[], multi: boolean): string {
             $request->headers->all()
         );
         return response()->json(['event_id' => $event->id]);
+    }
+
+    public function refund(string $sessionId)
+    {
+        $result = $this->waslPay->refund($sessionId, 1000);
+        return response()->json($result);
     }`;
 
   return `${properties}
@@ -180,6 +198,7 @@ function symfonyClass(providers: readonly Provider[], multi: boolean): string {
         const waslpayVar = `$this->waslPay${suffix}`;
         const chkPath = checkoutPath(p, true);
         const wbkPath = webhookPath(p, true);
+        const refPath = refundPath(p, true);
         return `    public function checkout${suffix}(): JsonResponse
     {
         $session = ${waslpayVar}->initiatePayment(
@@ -196,8 +215,15 @@ function symfonyClass(providers: readonly Provider[], multi: boolean): string {
         );
         return $this->json(['event_id' => $event->id]);
     }
+
+    public function refund${suffix}(string $sessionId): JsonResponse
+    {
+        $result = ${waslpayVar}->refund($sessionId, 1000);
+        return $this->json($result);
+    }
     // Route: POST ${chkPath}  ->  checkout${suffix}()
-    // Route: POST ${wbkPath}  ->  webhook${suffix}()`;
+    // Route: POST ${wbkPath}  ->  webhook${suffix}()
+    // Route: POST ${refPath}  ->  refund${suffix}()`;
       }).join("\n\n")
     : `    public function checkout(): JsonResponse
     {
@@ -214,6 +240,12 @@ function symfonyClass(providers: readonly Provider[], multi: boolean): string {
             $request->headers->all()
         );
         return $this->json(['event_id' => $event->id]);
+    }
+
+    public function refund(string $sessionId): JsonResponse
+    {
+        $result = $this->waslPay->refund($sessionId, 1000);
+        return $this->json($result);
     }`;
 
   return `${properties}
@@ -247,6 +279,9 @@ function nativePhp(providers: readonly Provider[], multi: boolean): string {
  * $rawBody = file_get_contents('php://input');
  * $headers = function_exists('getallheaders') ? getallheaders() : [];
  * $event = $waslPay->handleWebhook($rawBody, $headers);
+ *
+ * Refund endpoint example: POST /refund/{sessionId}
+ * $result = $waslPay->refund($sessionId, 1000);
  */`;
   }
 
@@ -255,6 +290,7 @@ function nativePhp(providers: readonly Provider[], multi: boolean): string {
     const suffix = phpSuffix(p);
     const chkPath = checkoutPath(p, true);
     const wbkPath = webhookPath(p, true);
+    const refPath = refundPath(p, true);
     return `/*
  * --- ${phpClassName(p)} ---
  * POST ${chkPath}
@@ -265,6 +301,8 @@ function nativePhp(providers: readonly Provider[], multi: boolean): string {
  * $rawBody${suffix} = file_get_contents('php://input');
  * $headers${suffix} = function_exists('getallheaders') ? getallheaders() : [];
  * $event${suffix} = $waslPay${suffix}->handleWebhook($rawBody${suffix}, $headers${suffix});
+ * POST ${refPath}
+ * $result${suffix} = $waslPay${suffix}->refund($sessionId, 1000);
  */`;
   }).join("\n\n");
 

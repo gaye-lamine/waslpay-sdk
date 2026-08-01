@@ -38,6 +38,7 @@ final class MtnMomoProviderTest extends AbstractProviderContract
             'request' => new PaymentRequest(1000, 'XOF', 'contract-success', '+221770000000'),
             'failedSessionId' => 'contract-failed', 'failedPaymentError' => PaymentError::InsufficientFunds, 'timeoutSessionId' => 'contract-timeout',
             'validWebhook' => ['rawBody' => '{"referenceId":"mtn-1","externalId":"contract-success","status":"SUCCESSFUL"}', 'headers' => ['ocp-apim-subscription-key' => 'mtn-key'], 'id' => 'mtn-1', 'sessionId' => 'mtn-1', 'status' => PaymentStatus::Success],
+            'failedWebhook' => ['rawBody' => '{"referenceId":"mtn-failed","externalId":"contract-failed","status":"FAILED","code":"NOT_ENOUGH_FUNDS"}', 'headers' => ['ocp-apim-subscription-key' => 'mtn-key'], 'id' => 'mtn-failed', 'sessionId' => 'mtn-failed', 'status' => PaymentStatus::Failed],
             'invalidWebhook' => ['rawBody' => '{}', 'headers' => ['ocp-apim-subscription-key' => 'invalid']],
             'refund' => ['sessionId' => 'contract-success', 'originalAmount' => 1000, 'unusualOriginalSessionId' => 'mtn-unusual', 'unusualOriginalAmount' => PHP_INT_MAX, 'partialAmount' => 500, 'fullAmount' => 1000, 'supported' => true, 'status' => PaymentStatus::Pending],
             'expiration' => ['sessionId' => 'mtn-expired-unsupported', 'supported' => false],

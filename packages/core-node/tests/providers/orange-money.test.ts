@@ -61,6 +61,16 @@ const fixture: ProviderContractFixture = {
       status: PaymentStatus.Success, occurredAt: "2026-07-21T12:00:00.000Z",
     },
   },
+  failedWebhook: {
+    rawBody: JSON.stringify({
+      id: "orange-transaction-failed", reference: "contract-failed", status: "FAILED", code: "2020", timestamp: "2026-07-21T12:00:00.000Z",
+    }),
+    headers: { "X-Api-Key": WEBHOOK_API_KEY },
+    expectedEvent: {
+      id: "orange-transaction-failed", sessionId: "contract-failed", reference: "contract-failed",
+      status: PaymentStatus.Failed, occurredAt: "2026-07-21T12:00:00.000Z", error: PaymentError.InsufficientFunds,
+    },
+  },
   invalidWebhook: { rawBody: '{"reference":"contract-success","status":"SUCCESS"}', headers: { "x-api-key": "invalid-key" } },
   refund: { sessionId: "contract-success", originalAmount: 1_000, unusualOriginalSessionId: "contract-unusual", unusualOriginalAmount: Number.MAX_SAFE_INTEGER, partialAmount: 500, fullAmount: 1_000, supported: false },
   expiration: { sessionId: "orange-session-expired-unsupported", supported: false },

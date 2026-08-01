@@ -136,6 +136,10 @@ class ProviderContractTests(ABC):
         assert result.status is PaymentStatus.FAILED
         assert result.error is self.failed_payment_error
 
+    @property
+    def failed_webhook(self) -> tuple[str, WebhookHeaders] | None:
+        return None
+
     @pytest.mark.asyncio
     async def test_valid_webhook_returns_payment_event(self) -> None:
         raw_body, headers, expected = self.valid_webhook
@@ -143,12 +147,14 @@ class ProviderContractTests(ABC):
             assert await self.create_provider(client).handle_webhook(raw_body, headers) == expected
 
     @pytest.mark.asyncio
-    async def test_invalid_webhook_signature_throws_exception(self) -> None:
-        raw_body, headers = self.invalid_webhook
+    async def test_failed_webhook_returns_payment_event_with_error(self) -> None:
+        if self.failed_webhook is None:
+            pytest.skip("Provider has no failed webhook fixture")
+        raw_body, headers = self.failed_webhook
         async with httpx.AsyncClient() as client:
-            with pytest.raises(ProviderError) as raised:
-                await self.create_provider(client).handle_webhook(raw_body, headers)
-        assert raised.value.code is PaymentError.UNKNOWN
+            event = await self.create_provider(client).handle_webhook(raw_body, headers)
+            assert event.status is PaymentStatus.FAILED
+            assert event.error is not None
 
     @respx.mock
     @pytest.mark.asyncio

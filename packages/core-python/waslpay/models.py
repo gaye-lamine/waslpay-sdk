@@ -52,6 +52,14 @@ class PaymentEvent(_FrozenModel):
     reference: str | None = None
     error: PaymentError | None = None
 
+    @model_validator(mode="after")
+    def validate_error_for_status(self) -> PaymentEvent:
+        if self.status is PaymentStatus.FAILED and self.error is None:
+            raise ValueError("A failed payment event requires a PaymentError")
+        if self.status is not PaymentStatus.FAILED and self.error is not None:
+            raise ValueError("Only a failed payment event may include a PaymentError")
+        return self
+
 
 class RefundResult(_FrozenModel):
     session_id: str

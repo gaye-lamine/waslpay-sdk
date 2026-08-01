@@ -87,7 +87,11 @@ final class MtnMomoProvider implements PaymentProviderInterface
         if (!is_string($sessionId) || !is_string($status)) {
             throw new ProviderException(PaymentError::Unknown, 'Incomplete MTN MoMo webhook payload');
         }
-        $event = new PaymentEvent((string) ($payload['id'] ?? $sessionId), $sessionId, $this->status($status), (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['externalId']) ? (string) $payload['externalId'] : null);
+        $paymentStatus = $this->status($status);
+        $error = $paymentStatus === PaymentStatus::Failed
+            ? $this->errorFor(200, (string) ($payload['code'] ?? ''))
+            : null;
+        $event = new PaymentEvent((string) ($payload['id'] ?? $sessionId), $sessionId, $paymentStatus, (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['externalId']) ? (string) $payload['externalId'] : null, $error);
 
         return $this->webhookEventStore->process($event, fn (PaymentEvent $event): PaymentEvent => $this->processWebhookEvent($event));
     }

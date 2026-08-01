@@ -38,6 +38,7 @@ final class OrangeMoneyProviderTest extends AbstractProviderContract
             'request' => new PaymentRequest(1000, 'XOF', 'contract-success'),
             'failedSessionId' => 'contract-failed', 'failedPaymentError' => PaymentError::InsufficientFunds, 'timeoutSessionId' => 'contract-timeout',
             'validWebhook' => ['rawBody' => '{"transactionId":"orange-1","reference":"contract-success","status":"SUCCESS"}', 'headers' => ['x-api-key' => 'orange-key'], 'id' => 'orange-1', 'sessionId' => 'contract-success', 'status' => PaymentStatus::Success],
+            'failedWebhook' => ['rawBody' => '{"transactionId":"orange-failed","reference":"contract-failed","status":"FAILED","code":"2020"}', 'headers' => ['x-api-key' => 'orange-key'], 'id' => 'orange-failed', 'sessionId' => 'contract-failed', 'status' => PaymentStatus::Failed],
             'invalidWebhook' => ['rawBody' => '{}', 'headers' => ['x-api-key' => 'invalid']],
             'refund' => ['sessionId' => 'contract-success', 'originalAmount' => 1000, 'unusualOriginalSessionId' => 'contract-unusual', 'unusualOriginalAmount' => PHP_INT_MAX, 'partialAmount' => 500, 'fullAmount' => 1000, 'supported' => false, 'status' => PaymentStatus::Failed],
             'expiration' => ['sessionId' => 'orange-expired-unsupported', 'supported' => false],

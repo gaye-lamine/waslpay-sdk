@@ -46,7 +46,9 @@ class MtnMomoProvider(PaymentProvider):
         if self._header(headers, "ocp-apim-subscription-key") != self._subscription_key: raise ProviderError(PaymentError.UNKNOWN, "Invalid MTN MoMo webhook security key")
         payload = self._decode(raw_body); session_id, status = payload.get("referenceId"), payload.get("status")
         if not isinstance(session_id, str): raise ProviderError(PaymentError.UNKNOWN, "Incomplete MTN MoMo webhook payload")
-        event = PaymentEvent(id=str(payload.get("id", session_id)), session_id=session_id, status=self._status(status), occurred_at=str(payload.get("timestamp", "1970-01-01T00:00:00Z")), reference=payload.get("externalId") if isinstance(payload.get("externalId"), str) else None)
+        payment_status = self._status(status)
+        error = self._map_error(200, payload.get("code")) if payment_status is PaymentStatus.FAILED else None
+        event = PaymentEvent(id=str(payload.get("id", session_id)), session_id=session_id, status=payment_status, occurred_at=str(payload.get("timestamp", "1970-01-01T00:00:00Z")), reference=payload.get("externalId") if isinstance(payload.get("externalId"), str) else None, error=error)
         return self._webhook_event_store.process(event, self._process_webhook_event)
 
     @staticmethod

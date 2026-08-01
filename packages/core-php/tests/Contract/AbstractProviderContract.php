@@ -53,6 +53,19 @@ abstract class AbstractProviderContract extends TestCase
         self::assertNotSame('', $event->occurredAt);
     }
 
+    public function testFailedWebhookReturnsPaymentEventWithError(): void
+    {
+        $fixture = $this->contractFixture()['failedWebhook'] ?? null;
+        if ($fixture === null) {
+            $this->markTestSkipped('Provider has no failed webhook fixture.');
+        }
+
+        $event = $this->createProvider()->handleWebhook($fixture['rawBody'], $fixture['headers']);
+
+        self::assertSame(PaymentStatus::Failed, $event->status);
+        self::assertNotNull($event->error);
+    }
+
     public function testInvalidWebhookSignatureThrowsException(): void
     {
         $fixture = $this->contractFixture()['invalidWebhook'];

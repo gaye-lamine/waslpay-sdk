@@ -28,6 +28,10 @@ function webhookPath(provider: Provider, multi: boolean): string {
   return multi ? `/api/webhooks/waslpay/${provider}` : "/api/webhooks/waslpay";
 }
 
+function refundPath(provider: Provider, multi: boolean): string {
+  return multi ? `/refund/${provider}/:sessionId` : "/refund/:sessionId";
+}
+
 // ---------------------------------------------------------------------------
 // Provider instantiation snippets
 // ---------------------------------------------------------------------------
@@ -96,6 +100,15 @@ app.post('${webhookPath(p, false)}', express.raw({ type: 'application/json' }), 
   } catch (err) {
     res.status(400).send((err && typeof err === 'object' && 'message' in err) ? String(err.message) : String(err));
   }
+});
+
+app.post('${refundPath(p, false)}', async (req, res) => {
+  try {
+    const result = await waslpay.refund(req.params.sessionId, 1000);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: (err && typeof err === 'object' && 'message' in err) ? err.message : String(err) });
+  }
 });`;
   }
 
@@ -122,6 +135,15 @@ app.post('${webhookPath(p, true)}', express.raw({ type: 'application/json' }), a
   } catch (err) {
     res.status(400).send((err && typeof err === 'object' && 'message' in err) ? String(err.message) : String(err));
   }
+});
+
+app.post('${refundPath(p, true)}', async (req, res) => {
+  try {
+    const result = await ${waslpayVar}.refund(req.params.sessionId, 1000);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: (err && typeof err === 'object' && 'message' in err) ? err.message : String(err) });
+  }
 });`);
   }
   return lines.join("\n");
@@ -146,6 +168,12 @@ fastify.post('${webhookPath(p, false)}', async (request, reply) => {
   const rawBody = request.rawBody || request.body;
   const event = await waslpay.handleWebhook(rawBody, request.headers);
   return { eventId: event.id };
+});
+
+fastify.post('${refundPath(p, false)}', async (request, reply) => {
+  const { sessionId } = request.params;
+  const result = await waslpay.refund(sessionId, 1000);
+  return result;
 });`;
   }
 
@@ -165,6 +193,12 @@ fastify.post('${webhookPath(p, true)}', async (request, reply) => {
   const rawBody = request.rawBody || request.body;
   const event = await ${waslpayVar}.handleWebhook(rawBody, request.headers);
   return { eventId: event.id };
+});
+
+fastify.post('${refundPath(p, true)}', async (request, reply) => {
+  const { sessionId } = request.params;
+  const result = await ${waslpayVar}.refund(sessionId, 1000);
+  return result;
 });`);
   }
   return lines.join("\n");
@@ -188,6 +222,11 @@ function nestJsMethods(providers: readonly Provider[], multi: boolean): string {
   async handleWebhookPost(@Req() req, @Res() res) {
     const event = await waslpay.handleWebhook(req.body, req.headers);
     return res.status(HttpStatus.OK).json({ eventId: event.id });
+  }
+
+  @Post('${refundPath(p, false).slice(1)}')
+  async refund(@Param('sessionId') sessionId) {
+    return await waslpay.refund(sessionId, 1000);
   }`;
   }
 
@@ -207,6 +246,11 @@ function nestJsMethods(providers: readonly Provider[], multi: boolean): string {
   async handleWebhook${methodSuffix}(@Req() req, @Res() res) {
     const event = await ${waslpayVar}.handleWebhook(req.body, req.headers);
     return res.status(HttpStatus.OK).json({ eventId: event.id });
+  }
+
+  @Post('${refundPath(p, true).slice(1)}')
+  async refund${methodSuffix}(@Param('sessionId') sessionId) {
+    return await ${waslpayVar}.refund(sessionId, 1000);
   }`);
   }
   return methods.join("\n\n");
@@ -273,7 +317,7 @@ start();
       const cls = jsClassName(p);
       const block = singleProviderBlock(p);
       return `${header}
-import { Controller, Post, Req, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Req, Res, HttpStatus, Param } from '@nestjs/common';
 import { WaslPay, ${cls} } from '@waslpay/core-node';
 
 ${block}
@@ -286,7 +330,7 @@ ${nestJsMethods(providers, false)}
     }
     const { instantiations, importClasses } = multiProviderBlock(providers);
     return `${header}
-import { Controller, Post, Req, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Req, Res, HttpStatus, Param } from '@nestjs/common';
 import { WaslPay, ${importClasses.join(", ")} } from '@waslpay/core-node';
 
 ${instantiations}

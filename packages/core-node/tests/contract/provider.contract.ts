@@ -47,6 +47,7 @@ export interface ProviderContractFixture {
   failedPaymentError: PaymentError;
   timeoutSessionId: string;
   validWebhook: WebhookFixture;
+  failedWebhook?: WebhookFixture;
   invalidWebhook: Pick<WebhookFixture, "rawBody" | "headers">;
   apiError?: ApiErrorFixture;
   refund: RefundFixture;
@@ -87,6 +88,12 @@ export function runProviderContractTests(providerName: string, fixture: Provider
       await expect(
         fixture.createProvider().handleWebhook(fixture.validWebhook.rawBody, fixture.validWebhook.headers)
       ).resolves.toEqual(fixture.validWebhook.expectedEvent);
+    });
+
+    it.skipIf(fixture.failedWebhook === undefined)("webhook d'échec attache un PaymentError", async () => {
+      const event = await fixture.createProvider().handleWebhook(fixture.failedWebhook!.rawBody, fixture.failedWebhook!.headers);
+      expect(event.status).toBe(PaymentStatus.Failed);
+      expect(event.error).toBeDefined();
     });
 
     it("signature de webhook invalide", async () => {

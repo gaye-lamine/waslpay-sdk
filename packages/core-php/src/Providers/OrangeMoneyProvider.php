@@ -101,7 +101,12 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
             throw new ProviderException(PaymentError::Unknown, 'Incomplete Orange Money webhook payload');
         }
 
-        $event = new PaymentEvent((string) ($payload['id'] ?? $payload['transactionId'] ?? $sessionId), $sessionId, $this->status($status), (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['reference']) ? (string) $payload['reference'] : null);
+        $paymentStatus = $this->status($status);
+        $error = $paymentStatus === PaymentStatus::Failed
+            ? $this->errorForCode((string) ($payload['code'] ?? ''))
+            : null;
+
+        $event = new PaymentEvent((string) ($payload['id'] ?? $payload['transactionId'] ?? $sessionId), $sessionId, $paymentStatus, (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['reference']) ? (string) $payload['reference'] : null, $error);
 
         return $this->webhookEventStore->process($event, fn (PaymentEvent $event): PaymentEvent => $this->processWebhookEvent($event));
     }

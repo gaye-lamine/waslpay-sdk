@@ -49,7 +49,9 @@ class OrangeMoneyProvider(PaymentProvider):
         session_id, status = payload.get("reference") or payload.get("transactionId"), payload.get("status")
         if not isinstance(session_id, str): raise ProviderError(PaymentError.UNKNOWN, "Incomplete Orange Money webhook payload")
         event_id = payload.get("id") or payload.get("transactionId") or session_id
-        event = PaymentEvent(id=str(event_id), session_id=session_id, status=self._status(status), occurred_at=str(payload.get("timestamp", "1970-01-01T00:00:00Z")), reference=payload.get("reference") if isinstance(payload.get("reference"), str) else None)
+        payment_status = self._status(status)
+        error = self._map_error(200, payload.get("code")) if payment_status is PaymentStatus.FAILED else None
+        event = PaymentEvent(id=str(event_id), session_id=session_id, status=payment_status, occurred_at=str(payload.get("timestamp", "1970-01-01T00:00:00Z")), reference=payload.get("reference") if isinstance(payload.get("reference"), str) else None, error=error)
         return self._webhook_event_store.process(event, self._process_webhook_event)
 
     @staticmethod

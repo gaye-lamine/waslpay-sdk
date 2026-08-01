@@ -160,6 +160,7 @@ describe("generateNodeBoilerplate (single provider)", () => {
     expect(generated).toContain(`// Generated for ${framework}. Selected providers: ${provider}`);
     // Single-provider: the canonical variable name is "provider"
     expect(generated).toContain("new WaslPay(provider);");
+    expect(generated).toContain("refund");
 
     // Real instantiation & syntax validation check (node --check and node execution)
     expect(() => verifyNodeInstantiation(generated)).not.toThrow();
@@ -189,10 +190,14 @@ describe("generateNodeBoilerplate (multi-provider)", () => {
     const chkOrange = framework === "nestjs" ? "checkout/orange-money" : "/checkout/orange-money";
     const wbkWave = framework === "nestjs" ? "api/webhooks/waslpay/wave" : "/api/webhooks/waslpay/wave";
     const wbkOrange = framework === "nestjs" ? "api/webhooks/waslpay/orange-money" : "/api/webhooks/waslpay/orange-money";
+    const refWave = framework === "nestjs" ? "refund/wave" : "/refund/wave";
+    const refOrange = framework === "nestjs" ? "refund/orange-money" : "/refund/orange-money";
     expect(generated).toContain(chkWave);
     expect(generated).toContain(chkOrange);
     expect(generated).toContain(wbkWave);
     expect(generated).toContain(wbkOrange);
+    expect(generated).toContain(refWave);
+    expect(generated).toContain(refOrange);
 
     // Real syntax + instantiation check
     expect(() => verifyNodeInstantiation(generated)).not.toThrow();
@@ -216,6 +221,9 @@ describe("generateNodeBoilerplate (multi-provider)", () => {
     expect(generated).toContain(`${prefix}api/webhooks/waslpay/wave`);
     expect(generated).toContain(`${prefix}api/webhooks/waslpay/orange-money`);
     expect(generated).toContain(`${prefix}api/webhooks/waslpay/mtn-momo`);
+    expect(generated).toContain(`${prefix}refund/wave`);
+    expect(generated).toContain(`${prefix}refund/orange-money`);
+    expect(generated).toContain(`${prefix}refund/mtn-momo`);
 
     // Real syntax + instantiation check
     expect(() => verifyNodeInstantiation(generated)).not.toThrow();
@@ -235,6 +243,7 @@ describe("generatePhpBoilerplate (single provider)", () => {
 
     expect(generated).toContain(`// Generated for ${framework}. Selected providers: ${provider}`);
     expect(generated).toContain("new WaslPay($provider);");
+    expect(generated).toContain("refund");
 
     // Real instantiation & syntax validation check (php -l and php execution)
     expect(() => verifyPhpInstantiation(generated)).not.toThrow();
@@ -263,6 +272,8 @@ describe("generatePhpBoilerplate (multi-provider)", () => {
     expect(generated).toContain("/checkout/mtn-momo");
     expect(generated).toContain("/api/webhooks/waslpay/wave");
     expect(generated).toContain("/api/webhooks/waslpay/mtn-momo");
+    expect(generated).toContain("/refund/wave");
+    expect(generated).toContain("/refund/mtn-momo");
 
     // Real syntax + instantiation check
     expect(() => verifyPhpInstantiation(generated)).not.toThrow();
@@ -288,6 +299,11 @@ describe("generatePhpBoilerplate (multi-provider)", () => {
     expect(generated).toContain("/api/webhooks/waslpay/orange-money");
     expect(generated).toContain("/api/webhooks/waslpay/mtn-momo");
 
+    // All 3 refund routes
+    expect(generated).toContain("/refund/wave");
+    expect(generated).toContain("/refund/orange-money");
+    expect(generated).toContain("/refund/mtn-momo");
+
     // Real syntax + instantiation check
     expect(() => verifyPhpInstantiation(generated)).not.toThrow();
   });
@@ -307,6 +323,7 @@ describe("generatePythonBoilerplate (single provider)", () => {
     expect(generated).toContain(`# Generated for ${framework}. Selected providers: ${provider}`);
     expect(generated).toContain("waslpay = WaslPay(provider)");
     expect(generated).toContain("httpx.AsyncClient()");
+    expect(generated).toContain("refund");
 
     // Real instantiation & syntax validation check (py_compile and python execution)
     expect(() => verifyPythonInstantiation(generated)).not.toThrow();
@@ -335,6 +352,8 @@ describe("generatePythonBoilerplate (multi-provider)", () => {
     expect(generated).toContain("/checkout/mtn-momo");
     expect(generated).toContain("/api/webhooks/waslpay/wave");
     expect(generated).toContain("/api/webhooks/waslpay/mtn-momo");
+    expect(generated).toContain("/refund/wave");
+    expect(generated).toContain("/refund/mtn-momo");
 
     // Real syntax + instantiation check
     expect(() => verifyPythonInstantiation(generated)).not.toThrow();
@@ -359,6 +378,11 @@ describe("generatePythonBoilerplate (multi-provider)", () => {
     expect(generated).toContain("/api/webhooks/waslpay/wave");
     expect(generated).toContain("/api/webhooks/waslpay/orange-money");
     expect(generated).toContain("/api/webhooks/waslpay/mtn-momo");
+
+    // All 3 refund routes
+    expect(generated).toContain("/refund/wave");
+    expect(generated).toContain("/refund/orange-money");
+    expect(generated).toContain("/refund/mtn-momo");
 
     // Real syntax + instantiation check
     expect(() => verifyPythonInstantiation(generated)).not.toThrow();

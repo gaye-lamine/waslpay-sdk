@@ -39,6 +39,9 @@ class TestOrangeMoneyProvider(ProviderContractTests):
         raw = '{"transactionId":"orange-1","reference":"contract-success","status":"SUCCESS","timestamp":"2026-07-21T12:00:00Z"}'
         return raw, {"x-api-key": "webhook-key"}, PaymentEvent(id="orange-1", session_id="contract-success", status=PaymentStatus.SUCCESS, reference="contract-success", occurred_at="2026-07-21T12:00:00Z")
     @property
+    def failed_webhook(self) -> tuple[str, dict[str, str]]:
+        return '{"transactionId":"orange-failed","reference":"contract-failed","status":"FAILED","code":"2020"}', {"x-api-key": "webhook-key"}
+    @property
     def invalid_webhook(self) -> tuple[str, dict[str, str]]: return "{}", {"x-api-key": "invalid"}
     @property
     def refund_supported(self) -> bool: return False

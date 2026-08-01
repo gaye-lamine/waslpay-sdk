@@ -73,7 +73,8 @@ class WaveProvider(PaymentProvider):
             else PaymentStatus.FAILED if event_type == "checkout.session.payment_failed"
             else self._status(data.get("payment_status"))
         )
-        event = PaymentEvent(id=str(payload.get("id", data["id"])), session_id=data["id"], status=status, occurred_at=str(data.get("when_completed", data.get("when_expires", data.get("when_created", "1970-01-01T00:00:00Z")))), reference=data.get("client_reference") if isinstance(data.get("client_reference"), str) else None)
+        error = self._map_error(200, data.get("error_code")) if status is PaymentStatus.FAILED else None
+        event = PaymentEvent(id=str(payload.get("id", data["id"])), session_id=data["id"], status=status, occurred_at=str(data.get("when_completed", data.get("when_expires", data.get("when_created", "1970-01-01T00:00:00Z")))), reference=data.get("client_reference") if isinstance(data.get("client_reference"), str) else None, error=error)
         return self._webhook_event_store.process(event, self._process_webhook_event)
 
     @staticmethod

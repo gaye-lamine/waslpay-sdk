@@ -123,13 +123,14 @@ export class MtnMomoProvider implements PaymentProvider {
       throw new MtnMomoProviderError(PaymentError.Unknown, "Incomplete MTN MoMo webhook payload");
     }
 
-    const event: PaymentEvent = {
-      id: payload.id ?? sessionId,
-      sessionId,
-      status: this.toPaymentStatus(payload.status),
-      ...(payload.externalId === undefined ? {} : { reference: payload.externalId }),
-      occurredAt: payload.timestamp ?? new Date().toISOString(),
-    };
+    const status = this.toPaymentStatus(payload.status);
+    const ref = payload.externalId === undefined ? {} : { reference: payload.externalId };
+    const occurredAt = payload.timestamp ?? new Date().toISOString();
+    const id = payload.id ?? sessionId;
+
+    const event: PaymentEvent = status === PaymentStatus.Failed
+      ? { id, sessionId, status: PaymentStatus.Failed, ...ref, occurredAt, error: this.mapError(200, payload.code) }
+      : { id, sessionId, status, ...ref, occurredAt };
     return this.webhookEventStore.record(event);
   }
 

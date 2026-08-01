@@ -70,6 +70,20 @@ const fixture: ProviderContractFixture = {
       status: PaymentStatus.Success, occurredAt: "2026-07-21T12:00:00.000Z",
     },
   },
+  failedWebhook: {
+    rawBody: JSON.stringify({
+      id: "wave-event-failed", type: "checkout.session.payment_failed",
+      data: { id: "wave-session-failed", client_reference: "contract-failed", payment_status: "cancelled", when_completed: "2026-07-21T12:00:00.000Z" },
+    }),
+    headers: { "X-Wave-Signature": createHmac("sha256", WEBHOOK_SECRET).update(JSON.stringify({
+      id: "wave-event-failed", type: "checkout.session.payment_failed",
+      data: { id: "wave-session-failed", client_reference: "contract-failed", payment_status: "cancelled", when_completed: "2026-07-21T12:00:00.000Z" },
+    })).digest("hex") },
+    expectedEvent: {
+      id: "wave-event-failed", sessionId: "wave-session-failed", reference: "contract-failed",
+      status: PaymentStatus.Failed, occurredAt: "2026-07-21T12:00:00.000Z", error: PaymentError.Unknown,
+    },
+  },
   invalidWebhook: { rawBody: '{"id":"wave-event-1"}', headers: { "x-wave-signature": "invalid" } },
   apiError: { sessionId: "wave-session-api-error", expectedError: PaymentError.InsufficientFunds },
   refund: { sessionId: "wave-session-success", originalAmount: 1_000, unusualOriginalSessionId: "wave-session-unusual", unusualOriginalAmount: Number.MAX_SAFE_INTEGER, partialAmount: 500, fullAmount: 1_000, supported: true },

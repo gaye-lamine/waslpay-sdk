@@ -39,6 +39,9 @@ class TestMtnMomoProvider(ProviderContractTests):
         raw = '{"referenceId":"mtn-1","externalId":"contract-success","status":"SUCCESSFUL","timestamp":"2026-07-21T12:00:00Z"}'
         return raw, {"ocp-apim-subscription-key": "subscription-key"}, PaymentEvent(id="mtn-1", session_id="mtn-1", status=PaymentStatus.SUCCESS, reference="contract-success", occurred_at="2026-07-21T12:00:00Z")
     @property
+    def failed_webhook(self) -> tuple[str, dict[str, str]]:
+        return '{"referenceId":"mtn-failed","externalId":"contract-failed","status":"FAILED","code":"NOT_ENOUGH_FUNDS"}', {"ocp-apim-subscription-key": "subscription-key"}
+    @property
     def invalid_webhook(self) -> tuple[str, dict[str, str]]: return "{}", {"ocp-apim-subscription-key": "invalid"}
     @property
     def refund_supported(self) -> bool: return True

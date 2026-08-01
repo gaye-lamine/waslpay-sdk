@@ -58,7 +58,13 @@ class TestWaveProvider(ProviderContractTests):
     def valid_webhook(self) -> tuple[str, dict[str, str], PaymentEvent]:
         raw = '{"id":"event-1","type":"checkout.session.completed","data":{"id":"wave-1","client_reference":"contract-success","payment_status":"succeeded","when_completed":"2026-07-21T12:00:00Z"}}'
         signature = hmac.new(b"secret", raw.encode(), hashlib.sha256).hexdigest()
-        return raw, {"x-wave-signature": signature}, PaymentEvent(id="event-1", session_id="wave-1", status=PaymentStatus.SUCCESS, reference="contract-success", occurred_at="2026-07-21T12:00:00Z")
+        return raw, {"x-wave-signature": signature}, PaymentEvent(id="event-1", session_id="wave-1", status=PaymentStatus.SUCCESS, occurred_at="2026-07-21T12:00:00Z", reference="contract-success")
+
+    @property
+    def failed_webhook(self) -> tuple[str, dict[str, str]]:
+        raw = '{"id":"event-failed","type":"checkout.session.payment_failed","data":{"id":"wave-failed","client_reference":"contract-failed","payment_status":"cancelled","when_completed":"2026-07-21T12:00:00Z"}}'
+        signature = hmac.new(b"secret", raw.encode(), hashlib.sha256).hexdigest()
+        return raw, {"x-wave-signature": signature}
     @property
     def invalid_webhook(self) -> tuple[str, dict[str, str]]: return "{}", {"x-wave-signature": "invalid"}
     @property

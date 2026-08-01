@@ -102,7 +102,10 @@ final class WaveProvider implements PaymentProviderInterface
                 : ($eventType === 'checkout.session.payment_failed'
                     ? PaymentStatus::Failed
                     : $this->status((string) ($data['payment_status'] ?? ''))));
-        $event = new PaymentEvent((string) ($payload['id'] ?? $sessionId), $sessionId, $status, (string) ($data['when_completed'] ?? $data['when_expires'] ?? $data['when_created'] ?? gmdate(DATE_ATOM)), isset($data['client_reference']) ? (string) $data['client_reference'] : null);
+        $error = $status === PaymentStatus::Failed
+            ? $this->errorFor(200, (string) ($data['error_code'] ?? ''))
+            : null;
+        $event = new PaymentEvent((string) ($payload['id'] ?? $sessionId), $sessionId, $status, (string) ($data['when_completed'] ?? $data['when_expires'] ?? $data['when_created'] ?? gmdate(DATE_ATOM)), isset($data['client_reference']) ? (string) $data['client_reference'] : null, $error);
 
         return $this->webhookEventStore->process($event, fn (PaymentEvent $event): PaymentEvent => $this->processWebhookEvent($event));
     }
