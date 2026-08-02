@@ -21,8 +21,10 @@ Le Playground communique avec un serveur local que vous démarrez dans votre ter
 **Dans un terminal, lancez :**
 
 ```bash
-npx @waslpay/cli dev --target http://localhost:8000/api/webhooks/waslpay
+wasl dev
 ```
+
+> Si vous n'avez pas installé la CLI globalement : `npx @waslpay/cli dev`
 
 Vous devriez voir :
 

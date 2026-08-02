@@ -10,7 +10,8 @@
   },
   "type": "module",
   "bin": {
-    "waslpay": "./bin/waslpay.js"
+    "waslpay": "./bin/waslpay.js",
+    "wasl": "./bin/waslpay.js"
   },
   "files": ["bin", "dist"],
   "scripts": {

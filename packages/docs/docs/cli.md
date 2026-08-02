@@ -5,12 +5,30 @@ sidebar_position: 5
 # CLI WaslPay
 
 La CLI génère une intégration, lance le simulateur local, vérifie votre
-configuration et envoie des webhooks signés. Elle s'exécute sans installation
-globale :
+configuration et envoie des webhooks signés.
+
+**Installation globale (recommandée) :**
+
+```bash
+npm install -g @waslpay/cli
+```
+
+Après cette installation unique, toutes les commandes deviennent :
+
+```bash
+wasl init
+wasl dev
+wasl doctor
+wasl trigger wave.payment.success
+```
+
+**Sans installation globale**, préfixez chaque commande par `npx @waslpay/cli` :
 
 ```bash
 npx @waslpay/cli init
 ```
+
+> Les exemples qui suivent utilisent `wasl`. Remplacez par `npx @waslpay/cli` si vous n'installez pas globalement.
 
 ## `waslpay init`
 
@@ -20,7 +38,7 @@ framework, les providers et le mode mock ou API opérateur. Il crée
 langage choisi.
 
 ```text
-$ npx @waslpay/cli init
+$ wasl init
 Welcome to WaslPay SDK Generator 🌍
 
 ? Langage backend cible ? Node.js (TypeScript)
@@ -38,7 +56,7 @@ Pour un script CI, fournissez impérativement les trois options ensemble :
 `--language`, `--framework` et `--providers`.
 
 ```bash
-npx @waslpay/cli init \
+wasl init \
   --language node \
   --framework express \
   --providers wave,mtn-momo
@@ -54,7 +72,7 @@ Ajoutez `--mock` au mode non interactif pour générer des identifiants fictifs
 et les URLs locales du simulateur :
 
 ```bash
-npx @waslpay/cli init \
+wasl init \
   --language node \
   --framework express \
   --providers wave \
@@ -69,7 +87,7 @@ WAVE_WEBHOOK_SECRET=mock_wave_webhook
 WAVE_BASE_URL=http://localhost:4004/mock/wave
 ```
 
-Lancez ensuite `waslpay dev`. Pour le parcours complet et le passage vers les
+Lancez ensuite `wasl dev`. Pour le parcours complet et le passage vers les
 clés de production sans changement de code, consultez
 [Tester sans clés API](./getting-started/testing-without-api-keys).
 
@@ -80,16 +98,22 @@ l'assistant. Exemple observé :
 Error: Invalid --providers value: fake-provider. Expected one of: orange-money, wave, mtn-momo.
 ```
 
-## `waslpay dev`
+## `wasl dev`
 
 Lance un checkout local, un simulateur de webhooks HMAC et les mocks HTTP
 Orange Money, Wave et MTN MoMo. Les options sont `--port` (défaut `4004`) et
 `--target` (défaut `http://localhost:8000/api/webhooks/waslpay`).
 
+Commande minimale — les valeurs par défaut couvrent la majorité des cas :
+
 ```bash
-npx @waslpay/cli dev \
-  --port 4004 \
-  --target http://localhost:8000/api/webhooks/waslpay
+wasl dev
+```
+
+Avec options explicites :
+
+```bash
+wasl dev --port 4004 --target http://localhost:8000/api/webhooks/waslpay
 ```
 
 ```text
@@ -106,13 +130,13 @@ http://localhost:4004/mock/wave
 http://localhost:4004/mock/mtn
 ```
 
-## `waslpay doctor`
+## `wasl doctor`
 
 Lit `.env.local`, puis `.env`, détecte les providers présents et vérifie leurs
 variables requises ainsi que Node.js 20 ou supérieur.
 
 ```bash
-npx @waslpay/cli doctor
+wasl doctor
 ```
 
 ```text
@@ -131,7 +155,7 @@ Configuration WaslPay incomplète.
 La commande utilise le code de sortie `1` lorsque la configuration est
 incomplète, ce qui permet de l'employer en CI.
 
-## `waslpay trigger <event>`
+## `wasl trigger <event>`
 
 Forge un webhook normalisé, le signe avec HMAC-SHA256 et l'envoie à une cible.
 Les événements acceptés sont toutes les combinaisons suivantes :
@@ -146,8 +170,7 @@ Les options `--target` et `--secret` ont respectivement pour valeurs par défaut
 `http://localhost:8000/api/webhooks/waslpay` et `whsec_dev_12345`.
 
 ```bash
-npx @waslpay/cli trigger wave.payment.success \
-  --target http://127.0.0.1:18001/api/webhooks/waslpay
+wasl trigger wave.payment.success
 ```
 
 ```text

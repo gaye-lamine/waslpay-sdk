@@ -19,13 +19,13 @@ Générez d'abord l'intégration et les variables de démonstration. Les trois o
 de sélection sont requises ensemble en mode non interactif :
 
 ```bash
-npx @waslpay/cli init --language node --framework express --providers wave --mock
+wasl init --language node --framework express --providers wave --mock
 ```
 
 Le fichier `.env.waslpay.example` créé contient notamment :
 
 ```dotenv
-# Mode test sans clés (--mock). Lancez `waslpay dev` pour démarrer le serveur mock.
+# Mode test sans clés (--mock). Lancez `wasl dev` pour démarrer le serveur mock.
 # Pour passer en production, remplacez UNIQUEMENT ces valeurs par vos vraies clés et supprimez les lignes *_BASE_URL -- aucune modification de code n'est nécessaire.
 WAVE_API_KEY=mock_wave_key
 WAVE_WEBHOOK_SECRET=mock_wave_webhook
@@ -35,7 +35,7 @@ WAVE_BASE_URL=http://localhost:4004/mock/wave
 Dans un second terminal, démarrez le serveur local :
 
 ```bash
-npx @waslpay/cli dev --port 4004
+wasl dev
 ```
 
 Laissez ce processus actif pendant les exemples qui suivent.

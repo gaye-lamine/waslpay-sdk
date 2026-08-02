@@ -207,8 +207,9 @@ export default function ApiPlayground(): React.JSX.Element {
         setError(
           `Impossible de joindre le serveur mock WaslPay sur ${devBase}.\n\n` +
           `Démarrez-le dans un terminal :\n` +
-          `  npx @waslpay/cli dev --target http://localhost:8000/api/webhooks/waslpay\n\n` +
-          `Note : http://localhost est autorisé depuis une page HTTPS (exception navigateur pour le développement local).`
+          `  wasl dev\n\n` +
+          `(Sans installation globale : npx @waslpay/cli dev)\n\n` +
+          `Le serveur mock doit être actif sur le port ${devPort}.`
         );
       } else {
         setError(raw || "Erreur réseau inattendue.");
