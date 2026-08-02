@@ -16,7 +16,7 @@ Intégrer les moyens de paiement mobile impose habituellement de gérer une API 
 
 - Les adaptateurs appellent directement les API Orange Money, Wave et MTN MoMo avec vos propres identifiants marchands. WaslPay ne demande pas de compte auprès d'un intermédiaire ; un compte et un contrat avec l'opérateur choisi restent nécessaires.
 - Le SDK n'ajoute aucun frais d'intermédiaire aux transactions. Les frais applicables relèvent de la relation commerciale avec l'opérateur.
-- Le contrat d'interface est public dans [spec/provider-interface.md](spec/provider-interface.md). Les contributions sont ouvertes via le dépôt ; une gouvernance communautaire formalisée n'est pas encore publiée.
+- Le code est open source et le contrat est public dans [spec/provider-interface.md](spec/provider-interface.md). Les contributions sont ouvertes via le dépôt ; une gouvernance communautaire formalisée n'est pas encore publiée.
 
 ## Quickstart en 30 secondes
 

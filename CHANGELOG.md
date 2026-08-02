@@ -3,6 +3,13 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.12 — 2026-08-02
+
+### Changed
+
+- **Docs**: Restore open source framing in `introduction.md` and `README.md` — the SDK remains free and MIT-licensed; this is a factual statement, not a positioning choice.
+- **CLI**: Add `wasl` short binary alias — `wasl dev`, `wasl init`, `wasl doctor`, `wasl trigger` are now equivalent to `waslpay <command>` and require no flags (all options have sensible defaults).
+
 ## 3.0.11 — 2026-08-01
 
 ### Fixed
