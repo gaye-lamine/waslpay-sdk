@@ -3,6 +3,12 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.13 — 2026-08-02
+
+### Fixed
+
+- **CLI**: `fix(cli): generated boilerplates never loaded .env.waslpay.example -- Node (all 6 templates) had no dotenv loading at all, PHP native called getenv() without initializing dotenv, and Python called load_dotenv() without the correct filename (loaded default .env instead of .env.waslpay.example). Found via a real blind end-to-end test on Express. Added 8 parity tests across all 3 languages to catch future regressions.`
+
 ## 3.0.12 — 2026-08-02
 
 ### Changed
