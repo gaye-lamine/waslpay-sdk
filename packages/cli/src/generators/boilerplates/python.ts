@@ -192,7 +192,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from waslpay import WaslPay, PaymentRequest
 ${imports}
 
-load_dotenv()
+load_dotenv('.env.waslpay.example')
 
 app = FastAPI()
 
@@ -220,7 +220,7 @@ from django.views.decorators.csrf import csrf_exempt
 from waslpay import WaslPay, PaymentRequest
 ${imports}
 
-load_dotenv()
+load_dotenv('.env.waslpay.example')
 
 ${blocks}
 

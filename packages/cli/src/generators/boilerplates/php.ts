@@ -370,12 +370,15 @@ ${symfonyClass(providers, multi)}
 declare(strict_types=1);
 
 ${header}
+use Dotenv\\Dotenv;
 use GuzzleHttp\\Client;
 use WaslPay\\Sdk\\DTO\\PaymentRequest;
 use WaslPay\\Sdk\\WaslPay;
 ${uses}
 
 require_once __DIR__ . '/vendor/autoload.php';
+$dotenv = Dotenv::createImmutable(__DIR__, '.env.waslpay.example');
+$dotenv->safeLoad();
 
 ${nativePhp(providers, multi)}
 `;

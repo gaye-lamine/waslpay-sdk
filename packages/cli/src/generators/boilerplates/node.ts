@@ -272,6 +272,8 @@ export function generateNodeBoilerplate(framework: NodeFramework, providers: rea
       return `${header}
 import Fastify from 'fastify';
 import { WaslPay, ${cls} } from '@waslpay/core-node';
+import { config } from 'dotenv';
+config({ path: '.env.waslpay.example' });
 
 const fastify = Fastify({ logger: true });
 
@@ -293,6 +295,8 @@ start();
     return `${header}
 import Fastify from 'fastify';
 import { WaslPay, ${importClasses.join(", ")} } from '@waslpay/core-node';
+import { config } from 'dotenv';
+config({ path: '.env.waslpay.example' });
 
 const fastify = Fastify({ logger: true });
 
@@ -319,6 +323,8 @@ start();
       return `${header}
 import { Controller, Post, Req, Res, HttpStatus, Param } from '@nestjs/common';
 import { WaslPay, ${cls} } from '@waslpay/core-node';
+import { config } from 'dotenv';
+config({ path: '.env.waslpay.example' });
 
 ${block}
 
@@ -332,6 +338,8 @@ ${nestJsMethods(providers, false)}
     return `${header}
 import { Controller, Post, Req, Res, HttpStatus, Param } from '@nestjs/common';
 import { WaslPay, ${importClasses.join(", ")} } from '@waslpay/core-node';
+import { config } from 'dotenv';
+config({ path: '.env.waslpay.example' });
 
 ${instantiations}
 
@@ -350,6 +358,8 @@ ${nestJsMethods(providers, true)}
     return `${header}
 import express from 'express';
 import { WaslPay, ${cls} } from '@waslpay/core-node';
+import { config } from 'dotenv';
+config({ path: '.env.waslpay.example' });
 
 const app = express();
 app.use(express.json());
@@ -374,6 +384,8 @@ app.listen(port, () => {
   return `${header}
 import express from 'express';
 import { WaslPay, ${importClasses.join(", ")} } from '@waslpay/core-node';
+import { config } from 'dotenv';
+config({ path: '.env.waslpay.example' });
 
 const app = express();
 app.use(express.json());

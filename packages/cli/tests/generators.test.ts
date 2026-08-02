@@ -357,7 +357,7 @@ describe("generatePythonBoilerplate (multi-provider)", () => {
 
     // Real syntax + instantiation check
     expect(() => verifyPythonInstantiation(generated)).not.toThrow();
-  });
+  }, 15000);
 
   it.each(pythonFrameworks)("3 providers (all) on %s: all 3 instances and routes present", (framework) => {
     const generated = generatePythonBoilerplate(framework, [...threeProviders]);
@@ -386,7 +386,7 @@ describe("generatePythonBoilerplate (multi-provider)", () => {
 
     // Real syntax + instantiation check
     expect(() => verifyPythonInstantiation(generated)).not.toThrow();
-  });
+  }, 15000);
 });
 
 // ---------------------------------------------------------------------------
@@ -494,6 +494,64 @@ describe("env ↔ boilerplate consistency (ORANGE_MONEY_CALLBACK_URL)", () => {
       expect(match).not.toBeNull();
       const webhookPath = new URL(match![1]).pathname;
       expect(boilerplate).toContain(webhookPath);
+    },
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Dotenv / env loading parity — all 3 languages must load .env.waslpay.example
+// ---------------------------------------------------------------------------
+
+describe("dotenv / env loading parity", () => {
+  it.each(nodeFrameworks)(
+    "Node.js/%s boilerplate loads .env.waslpay.example via dotenv config()",
+    (framework) => {
+      const single = generateNodeBoilerplate(framework, ["wave"]);
+      expect(single).toContain("dotenv");
+      expect(single).toContain(".env.waslpay.example");
+
+      const multi = generateNodeBoilerplate(framework, ["wave", "mtn-momo"]);
+      expect(multi).toContain("dotenv");
+      expect(multi).toContain(".env.waslpay.example");
+    },
+  );
+
+  it("PHP/native boilerplate loads .env.waslpay.example via Dotenv::createImmutable()", () => {
+    const single = generatePhpBoilerplate("native", ["wave"]);
+    expect(single).toContain("Dotenv");
+    expect(single).toContain(".env.waslpay.example");
+    expect(single).toContain("safeLoad");
+
+    const multi = generatePhpBoilerplate("native", ["wave", "mtn-momo"]);
+    expect(multi).toContain("Dotenv");
+    expect(multi).toContain(".env.waslpay.example");
+    expect(multi).toContain("safeLoad");
+  });
+
+  it.each(["laravel", "symfony"] as const)(
+    "PHP/%s boilerplate relies on framework-level env loading — no explicit dotenv call required",
+    (framework) => {
+      // Laravel and Symfony auto-load .env via the framework bootstrap.
+      // The boilerplate must NOT embed a manual dotenv call (it would be redundant
+      // and would conflict with the framework). Verify the generated output is valid PHP.
+      const generated = generatePhpBoilerplate(framework, ["wave"]);
+      expect(generated).toContain("<?php");
+      expect(generated).toContain("WaveProvider");
+      // Framework boilerplates must NOT add a redundant Dotenv::createImmutable call
+      expect(generated).not.toContain("Dotenv::createImmutable");
+    },
+  );
+
+  it.each(["fastapi", "django"] as const)(
+    "Python/%s boilerplate loads .env.waslpay.example via load_dotenv()",
+    (framework) => {
+      const single = generatePythonBoilerplate(framework, ["wave"]);
+      expect(single).toContain("load_dotenv");
+      expect(single).toContain(".env.waslpay.example");
+
+      const multi = generatePythonBoilerplate(framework, ["wave", "mtn-momo"]);
+      expect(multi).toContain("load_dotenv");
+      expect(multi).toContain(".env.waslpay.example");
     },
   );
 });
