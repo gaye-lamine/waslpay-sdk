@@ -3,6 +3,12 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.14 — 2026-08-03
+
+### Fixed
+
+- **CLI**: Express boilerplate had a global `express.json()` middleware that consumed the webhook route's raw body before `express.raw()` could read it, breaking HMAC signature verification — found via a real blind end-to-end test. `express.json()` is now scoped per-route (checkout, refund), webhook routes keep exclusive access to the raw body. Test now actually executes the generated code in a subprocess instead of comparing hand-written reference implementations.
+
 ## 3.0.13 — 2026-08-02
 
 ### Fixed
