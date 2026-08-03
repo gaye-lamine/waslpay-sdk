@@ -3,6 +3,13 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.15 — 2026-08-03
+
+### Fixed
+
+- **CLI**: Documented explicit `.env.waslpay.example` copy/merge requirement into project `.env` for Laravel and Symfony in generated boilerplates and CLI README.
+- **CLI**: Formatted generated Laravel controller route definition comments to match copy-pasteable `Route::post(...)` syntax for `routes/api.php`.
+
 ## 3.0.14 — 2026-08-03
 
 ### Fixed
