@@ -137,9 +137,10 @@ function laravelClass(providers: readonly Provider[], multi: boolean): string {
         $result = ${waslpayVar}->refund($sessionId, 1000);
         return response()->json($result);
     }
-    // Route: POST ${chkPath}  ->  checkout${suffix}()
-    // Route: POST ${wbkPath}  ->  webhook${suffix}()
-    // Route: POST ${refPath}  ->  refund${suffix}()`;
+    // Copy to routes/api.php:
+    // Route::post('${chkPath}', [PaymentController::class, 'checkout${suffix}']);
+    // Route::post('${wbkPath}', [PaymentController::class, 'webhook${suffix}']);
+    // Route::post('${refPath}', [PaymentController::class, 'refund${suffix}']);`;
       }).join("\n\n")
     : `    public function checkout()
     {
@@ -162,7 +163,11 @@ function laravelClass(providers: readonly Provider[], multi: boolean): string {
     {
         $result = $this->waslPay->refund($sessionId, 1000);
         return response()->json($result);
-    }`;
+    }
+    // Copy to routes/api.php:
+    // Route::post('/checkout', [PaymentController::class, 'checkout']);
+    // Route::post('/api/webhooks/waslpay', [PaymentController::class, 'webhook']);
+    // Route::post('/refund/{sessionId}', [PaymentController::class, 'refund']);`;
 
   return `${properties}
 
