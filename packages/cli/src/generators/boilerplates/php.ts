@@ -326,6 +326,8 @@ export function generatePhpBoilerplate(framework: PhpFramework, providers: reado
 declare(strict_types=1);
 
 ${header}
+// Note: Laravel loads environment variables exclusively from '.env'.
+// Copy or merge the variables from '.env.waslpay.example' into your project's '.env' file.
 namespace App\\Http\\Controllers;
 
 use GuzzleHttp\\Client;
@@ -347,6 +349,8 @@ ${laravelClass(providers, multi)}
 declare(strict_types=1);
 
 ${header}
+// Note: Symfony loads environment variables from '.env' / '.env.local'.
+// Copy or merge the variables from '.env.waslpay.example' into your project's '.env' / '.env.local' file.
 namespace App\\Controller;
 
 use GuzzleHttp\\Client;

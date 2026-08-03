@@ -45,6 +45,7 @@ Welcome to WaslPay SDK Generator 🌍
 
 WaslPay files generated
 Review .env.waslpay.example, add your credentials locally, then wire the selected provider into your application.
+(Note for Laravel & Symfony: copy or merge .env.waslpay.example into your project's .env file)
 ```
 
 ### `init` non interactif

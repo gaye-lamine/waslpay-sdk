@@ -529,16 +529,17 @@ describe("dotenv / env loading parity", () => {
   });
 
   it.each(["laravel", "symfony"] as const)(
-    "PHP/%s boilerplate relies on framework-level env loading — no explicit dotenv call required",
+    "PHP/%s boilerplate documents explicit copy/merge of .env.waslpay.example to .env",
     (framework) => {
-      // Laravel and Symfony auto-load .env via the framework bootstrap.
-      // The boilerplate must NOT embed a manual dotenv call (it would be redundant
-      // and would conflict with the framework). Verify the generated output is valid PHP.
+      // Laravel and Symfony auto-load .env via framework bootstrap.
+      // They do NOT auto-read .env.waslpay.example directly.
+      // Verify that the generated code contains clear instructions to copy/merge .env.waslpay.example into .env
       const generated = generatePhpBoilerplate(framework, ["wave"]);
       expect(generated).toContain("<?php");
       expect(generated).toContain("WaveProvider");
-      // Framework boilerplates must NOT add a redundant Dotenv::createImmutable call
       expect(generated).not.toContain("Dotenv::createImmutable");
+      expect(generated).toContain(".env.waslpay.example");
+      expect(generated).toContain(".env");
     },
   );
 
