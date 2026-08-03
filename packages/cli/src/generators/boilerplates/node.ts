@@ -79,7 +79,7 @@ function expressRoutes(providers: readonly Provider[], multi: boolean): string {
   if (!multi) {
     const p = providers[0] ?? "wave";
     return `
-app.post('${checkoutPath(p, false)}', async (req, res) => {
+app.post('${checkoutPath(p, false)}', express.json(), async (req, res) => {
   try {
     const session = await waslpay.initiatePayment({
       amount: 1000,
@@ -102,7 +102,7 @@ app.post('${webhookPath(p, false)}', express.raw({ type: 'application/json' }), 
   }
 });
 
-app.post('${refundPath(p, false)}', async (req, res) => {
+app.post('${refundPath(p, false)}', express.json(), async (req, res) => {
   try {
     const result = await waslpay.refund(req.params.sessionId, 1000);
     res.json(result);
@@ -117,7 +117,7 @@ app.post('${refundPath(p, false)}', async (req, res) => {
     const v = jsVarName(p);
     const waslpayVar = `waslpay${v.charAt(0).toUpperCase()}${v.slice(1)}`;
     lines.push(`
-app.post('${checkoutPath(p, true)}', async (req, res) => {
+app.post('${checkoutPath(p, true)}', express.json(), async (req, res) => {
   try {
     const session = await ${waslpayVar}.initiatePayment({
       amount: 1000, currency: 'XOF', reference: 'order-123', customerPhone: '+221770000000',
@@ -137,7 +137,7 @@ app.post('${webhookPath(p, true)}', express.raw({ type: 'application/json' }), a
   }
 });
 
-app.post('${refundPath(p, true)}', async (req, res) => {
+app.post('${refundPath(p, true)}', express.json(), async (req, res) => {
   try {
     const result = await ${waslpayVar}.refund(req.params.sessionId, 1000);
     res.json(result);
@@ -362,7 +362,6 @@ import { config } from 'dotenv';
 config({ path: '.env.waslpay.example' });
 
 const app = express();
-app.use(express.json());
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -388,7 +387,6 @@ import { config } from 'dotenv';
 config({ path: '.env.waslpay.example' });
 
 const app = express();
-app.use(express.json());
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

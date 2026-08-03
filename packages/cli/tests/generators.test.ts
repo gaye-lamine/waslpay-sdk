@@ -555,3 +555,92 @@ describe("dotenv / env loading parity", () => {
     },
   );
 });
+
+// ---------------------------------------------------------------------------
+// Express Webhook Body Type Integration Test
+// ---------------------------------------------------------------------------
+
+describe("Express Webhook Body Integration Test", () => {
+  it("executes the actual generated Express code in a child process and verifies the webhook route receives a raw Buffer body", async () => {
+    const code = generateNodeBoilerplate("express", ["wave"]);
+
+    // Instrument the actual generated webhook route handler to report whether req.body is a Buffer
+    const testCode = code
+      .replace("import { config } from 'dotenv';", "const config = () => {};")
+      .replace("config({ path: '.env.waslpay.example' });", "")
+      .replace(
+        "import { WaslPay, WaveProvider } from '@waslpay/core-node';",
+        "class WaveProvider { constructor() {} }\nclass WaslPay { constructor() {} handleWebhook() { return { id: 'evt_1' }; } }"
+      )
+      .replace(
+        "const event = await waslpay.handleWebhook(req.body, req.headers);",
+        "const isBuf = Buffer.isBuffer(req.body); res.header('x-test-is-buffer', String(isBuf)); const event = await waslpay.handleWebhook(req.body, req.headers);"
+      )
+      .replace(
+        "const port = process.env.PORT || 3000;",
+        "const port = 0; // Use random available port"
+      )
+      .replace(
+        "console.log(`Server listening on port ${port}`);",
+        `const serverPort = app.listen().address().port;
+console.log('SERVER_PORT:' + serverPort);`
+      );
+
+    const file = join(__dirname, `../test_express_raw_${Date.now()}_${Math.random().toString(36).substring(2)}.mjs`);
+    writeFileSync(file, testCode, "utf8");
+
+    try {
+      const { spawn } = await import("node:child_process");
+      const proc = spawn("node", [file], {
+        cwd: join(__dirname, ".."),
+        env: process.env,
+      });
+
+      let serverPort = 0;
+      let outputLogs = "";
+
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          proc.kill();
+          reject(new Error("Server start timeout. Logs: " + outputLogs));
+        }, 5000);
+
+        proc.stdout.on("data", (data) => {
+          const str = data.toString();
+          outputLogs += str;
+          const match = str.match(/SERVER_PORT:(\d+)/);
+          if (match) {
+            serverPort = parseInt(match[1], 10);
+            clearTimeout(timeout);
+            resolve();
+          }
+        });
+
+        proc.stderr.on("data", (data) => {
+          outputLogs += data.toString();
+        });
+
+        proc.on("error", (err) => {
+          clearTimeout(timeout);
+          reject(err);
+        });
+      });
+
+      expect(serverPort).toBeGreaterThan(0);
+
+      // Perform a real HTTP POST request directly to the actual generated webhook route
+      const { default: request } = await import("supertest");
+      const res = await request(`http://127.0.0.1:${serverPort}`)
+        .post("/api/webhooks/waslpay")
+        .send(JSON.stringify({ event: "wave.payment.success" }))
+        .set("Content-Type", "application/json");
+
+      proc.kill();
+
+      expect(res.headers["x-test-is-buffer"]).toBe("true");
+    } finally {
+      try { unlinkSync(file); } catch {}
+    }
+  }, 15000);
+});
+
