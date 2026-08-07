@@ -3,6 +3,12 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
+## 3.0.16 — 2026-08-07
+
+### Fixed
+
+- **core-php**: `WaveProvider`, `OrangeMoneyProvider`, and `MtnMomoProvider` header parsing only accepted `string` header values, but Symfony/Laravel's `HeaderBag::all()` returns each header as an array of strings — causing every webhook signature and key check to silently fail with "Invalid signature" when using the SDK from a Laravel or Symfony controller. Found via a real blind end-to-end test. Header parsing now accepts both `string` and `array<string>` formats across all three PHP providers. A `testValidWebhookWithSymfonyArrayHeaders` scenario has been added to `AbstractProviderContract` so all three PHP provider test suites cover both formats going forward. This fix is specific to the PHP SDK; Node.js and Python receive headers as plain strings from their respective frameworks and are not affected.
+
 ## 3.0.15 — 2026-08-03
 
 ### Fixed

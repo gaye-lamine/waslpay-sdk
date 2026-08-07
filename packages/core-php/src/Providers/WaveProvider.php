@@ -234,7 +234,21 @@ final class WaveProvider implements PaymentProviderInterface
         return PaymentError::Unknown;
     }
 
+    private function header(array $headers, string $name): ?string
+    {
+        foreach ($headers as $key => $value) {
+            if (strtolower((string) $key) === $name) {
+                if (is_string($value)) {
+                    return $value;
+                }
+                if (is_array($value) && isset($value[0]) && is_string($value[0])) {
+                    return $value[0];
+                }
+            }
+        }
+        return null;
+    }
+
     private function json(ResponseInterface $response): array { return $this->decode((string) $response->getBody()); }
     private function decode(string $body): array { $payload = json_decode($body, true, 512, JSON_THROW_ON_ERROR); if (!is_array($payload)) { throw new ProviderException(PaymentError::Unknown, 'Invalid Wave JSON response'); } return $payload; }
-    private function header(array $headers, string $name): ?string { foreach ($headers as $key => $value) { if (strtolower($key) === $name && is_string($value)) { return $value; } } return null; }
 }

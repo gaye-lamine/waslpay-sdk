@@ -53,6 +53,20 @@ abstract class AbstractProviderContract extends TestCase
         self::assertNotSame('', $event->occurredAt);
     }
 
+    public function testValidWebhookWithSymfonyArrayHeaders(): void
+    {
+        $fixture = $this->contractFixture()['validWebhook'];
+        $symfonyHeaders = array_map(
+            fn ($value) => is_array($value) ? $value : [$value],
+            $fixture['headers']
+        );
+        $event = $this->createProvider()->handleWebhook($fixture['rawBody'], $symfonyHeaders);
+
+        self::assertSame($fixture['id'], $event->id);
+        self::assertSame($fixture['sessionId'], $event->sessionId);
+        self::assertSame($fixture['status'], $event->status);
+    }
+
     public function testFailedWebhookReturnsPaymentEventWithError(): void
     {
         $fixture = $this->contractFixture()['failedWebhook'] ?? null;

@@ -206,8 +206,13 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
     private function header(array $headers, string $name): ?string
     {
         foreach ($headers as $headerName => $value) {
-            if (strtolower($headerName) === $name && is_string($value)) {
-                return $value;
+            if (strtolower((string) $headerName) === $name) {
+                if (is_string($value)) {
+                    return $value;
+                }
+                if (is_array($value) && isset($value[0]) && is_string($value[0])) {
+                    return $value[0];
+                }
             }
         }
         return null;
