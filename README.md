@@ -20,9 +20,14 @@ Intégrer les moyens de paiement mobile impose habituellement de gérer une API 
 
 ## Quickstart en 30 secondes
 
-Générez un point de départ adapté à votre stack :
+Installez la CLI WaslPay ou utilisez-la directement via `npx` :
 
 ```bash
+# Installation globale pour utiliser la commande 'wasl' / 'waslpay' :
+npm install -g @waslpay/cli
+wasl init
+
+# Ou sans installation :
 npx @waslpay/cli init
 ```
 

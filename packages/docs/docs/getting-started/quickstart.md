@@ -27,11 +27,16 @@ WAVE_API_KEY=wave_sn_prod_votre_cle_marchande
 WAVE_WEBHOOK_SECRET=votre_secret_webhook_wave
 ```
 
-Pour suivre ce guide sans clé API, utilisez le mode mock :
+Pour suivre ce guide sans clé API, installez la CLI globalement ou utilisez `npx` :
 
 ```bash
+npm install -g @waslpay/cli
 wasl init --language node --framework express --providers wave --mock
 wasl dev
+
+# Ou sans installation globale :
+# npx @waslpay/cli init --language node --framework express --providers wave --mock
+# npx @waslpay/cli dev
 ```
 
 Le générateur crée les variables `WAVE_API_KEY=mock_wave_key`,

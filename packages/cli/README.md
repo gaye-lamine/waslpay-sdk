@@ -1,10 +1,25 @@
 # WaslPay CLI
 
+## Installation globale (recommandée)
+
+Pour utiliser les commandes directes `wasl` ou `waslpay` (ex: `wasl dev`, `wasl init`) :
+
+```bash
+npm install -g @waslpay/cli
+```
+
+*Sans installation globale, vous devez préfixer vos commandes par `npx @waslpay/cli` (ex: `npx @waslpay/cli dev`).*
+
 ## Mode sans clés API
 
 ```bash
+# Avec installation globale :
+wasl init --language node --framework express --providers wave --mock
+wasl dev
+
+# Ou sans installation globale :
 npx @waslpay/cli init --language node --framework express --providers wave --mock
-waslpay dev
+npx @waslpay/cli dev
 ```
 
 La commande génère `WAVE_API_KEY=mock_wave_key`, `WAVE_WEBHOOK_SECRET=mock_wave_webhook`
