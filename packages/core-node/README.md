@@ -61,7 +61,9 @@ import express from "express";
 
 const app = express();
 
-// 1. Créer une session.
+/**
+ * Initialisation d'une nouvelle session de paiement.
+ */
 const session = await waslpay.initiatePayment({
   amount: 1_000,
   currency: "XOF",
@@ -71,23 +73,26 @@ const session = await waslpay.initiatePayment({
   failureUrl: "https://merchant.example/payments/failed",
 });
 
-// Redirigez vers session.paymentUrl quand le flux provider en fournit une.
-
-// 2. Vérifier le statut.
+/**
+ * Interrogation et vérification du statut courant de la session.
+ */
 const status = await waslpay.checkStatus(session.id);
 
-// 3. Le body brut est indispensable : placez cette route avant express.json().
+/**
+ * Endpoint de traitement du webhook sur le corps HTTP brut (raw body).
+ */
 app.post("/webhooks/payments", express.raw({ type: "application/json" }), async (req, res) => {
   try {
     const event = await waslpay.handleWebhook(req.body, req.headers);
-    // Rendez ce traitement idempotent avec event.id.
     res.sendStatus(204);
   } catch {
     res.sendStatus(401);
   }
 });
 
-// 4. Rembourser. Wave et MTN prennent en charge ce flux ; Orange le rejette explicitement.
+/**
+ * Remboursement partiel ou total de la transaction.
+ */
 const refund = await waslpay.refund(session.id, 500);
 ```
 

@@ -63,7 +63,7 @@ from waslpay import PaymentRequest
 
 app = FastAPI()
 
-# 1. Créer une session.
+"""Initialisation d'une nouvelle session de paiement."""
 session = await waslpay.initiate_payment(PaymentRequest(
     amount=1000,
     currency="XOF",
@@ -73,19 +73,19 @@ session = await waslpay.initiate_payment(PaymentRequest(
     failure_url="https://merchant.example/payments/failed",
 ))
 
-# 2. Vérifier le statut.
+"""Interrogation et vérification du statut courant de la session via PaymentStatusResult."""
 status_result = await waslpay.check_status(session.id)
 if status_result.status is PaymentStatus.FAILED:
     error = status_result.error
 
-# 3. Utilisez toujours le body brut pour les webhooks signés.
+"""Traitement du webhook sur le corps HTTP brut (raw_body)."""
 @app.post("/webhooks/payments")
 async def webhook(request: Request) -> dict[str, str]:
     raw_body = await request.body()
     event = await waslpay.handle_webhook(raw_body, dict(request.headers))
     return {"event_id": event.id}
 
-# 4. Rembourser. Orange Money lève NotImplementedError.
+"""Demande de remboursement partiel ou total."""
 refund = await waslpay.refund(session.id, 500)
 ```
 

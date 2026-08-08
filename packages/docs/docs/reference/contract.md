@@ -83,7 +83,9 @@ désérialisation : le provider vérifie sa signature ou sa clé de sécurité.
 const refund = await waslPay.refund(session.id, 500);
 console.log(refund.refundId, refund.amount, refund.status);
 
-// Omettre amount demande un remboursement total.
+/**
+ * L'omission du paramètre d'ordre d'échéance d'un montant entraîne l'exécution d'un remboursement total de la transaction.
+ */
 const fullRefund = await waslPay.refund(session.id);
 ```
 

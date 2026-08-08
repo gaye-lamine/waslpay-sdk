@@ -63,7 +63,9 @@ declare(strict_types=1);
 
 use WaslPay\Sdk\DTO\PaymentRequest;
 
-// 1. Créer une session.
+/**
+ * Initialisation d'une nouvelle session de paiement.
+ */
 $session = $waslPay->initiatePayment(new PaymentRequest(
     amount: 1000,
     currency: 'XOF',
@@ -73,17 +75,23 @@ $session = $waslPay->initiatePayment(new PaymentRequest(
     failureUrl: 'https://merchant.example/payments/failed',
 ));
 
-// 2. Vérifier le statut.
+/**
+ * Interrogation et vérification du statut courant de la session via PaymentStatusResult.
+ */
 $statusResult = $waslPay->checkStatus($session->id);
 if ($statusResult->status === PaymentStatus::Failed) {
     $error = $statusResult->error;
 }
 
-// 3. Une route webhook doit transmettre le body brut, sans json_decode préalable.
+/**
+ * Traitement du webhook sur le flux HTTP brut (php://input).
+ */
 $rawBody = file_get_contents('php://input');
 $event = $waslPay->handleWebhook($rawBody, getallheaders());
 
-// 4. Rembourser. Orange Money rejette explicitement cette opération.
+/**
+ * Demande de remboursement partiel ou total.
+ */
 $refund = $waslPay->refund($session->id, 500);
 ```
 

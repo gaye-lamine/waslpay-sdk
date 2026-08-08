@@ -54,15 +54,20 @@ import { createHmac } from "node:crypto";
 
 import { WaslPay, WaveProvider } from "@waslpay/core-node";
 
+/**
+ * Initialisation de l'adaptateur WaveProvider.
+ * La clé baseUrl est facultative et uniquement requise pour les tests d'intégration locaux.
+ */
 const provider = new WaveProvider({
   apiKey: process.env.WAVE_API_KEY!,
   webhookSecret: process.env.WAVE_WEBHOOK_SECRET!,
-  // Absente en production : le provider utilise alors https://api.wave.com/v1.
   baseUrl: process.env.WAVE_BASE_URL,
 });
 const waslPay = new WaslPay(provider);
 
-// 1. Créer une session de paiement.
+/**
+ * Création d'une nouvelle session de paiement unifiée.
+ */
 const session = await waslPay.initiatePayment({
   amount: 1000,
   currency: "XOF",
@@ -72,13 +77,17 @@ const session = await waslPay.initiatePayment({
   failureUrl: "http://localhost/failure",
 });
 
-// 2. Lire un PaymentStatusResult, et non un statut nu.
+/**
+ * Contrôle du statut de paiement (retourne un objet PaymentStatusResult).
+ */
 const statusResult = await waslPay.checkStatus(session.id);
 if (statusResult.status === "failed") {
   console.error(statusResult.error);
 }
 
-// 3. Le webhook doit être vérifié sur le body brut exact.
+/**
+ * Validation de la signature HMAC et déduplication du webhook sur le corps HTTP brut.
+ */
 const rawWebhook = JSON.stringify({
   id: "quickstart-event-1",
   type: "checkout.session.completed",
@@ -96,7 +105,9 @@ const event = await waslPay.handleWebhook(rawWebhook, {
   "x-wave-signature": signature,
 });
 
-// 4. Remboursement partiel. Wave et MTN le prennent en charge ; Orange le rejette.
+/**
+ * Demande de remboursement partiel (supporté nativement par Wave et MTN MoMo).
+ */
 const refund = await waslPay.refund(session.id, 500);
 
 console.log(JSON.stringify({ session, statusResult, event, refund }, null, 2));

@@ -36,7 +36,9 @@ const waslPay = new WaslPay(provider);
 
 const sessionId = "wave_2302a514-62f3-4f73-b85c-568938e3f083";
 
-// Remboursement partiel de 500 XOF
+/**
+ * Exécution d'un remboursement partiel de 500 XOF.
+ */
 const refund = await waslPay.refund(sessionId, 500);
 
 console.log("Résultat du remboursement:", refund);

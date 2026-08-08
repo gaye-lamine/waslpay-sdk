@@ -34,26 +34,38 @@ import { WaslPay, WaveProvider } from "@waslpay/core-node";
 
 const app = express();
 
+/**
+ * Initialisation de l'adaptateur de paiement.
+ */
 const provider = new WaveProvider({
   apiKey: process.env.WAVE_API_KEY!,
   webhookSecret: process.env.WAVE_WEBHOOK_SECRET!,
-  baseUrl: process.env.WAVE_BASE_URL, // http://127.0.0.1:4004/mock/wave en mode mock
+  baseUrl: process.env.WAVE_BASE_URL,
 });
 const waslPay = new WaslPay(provider);
 
-// Utiliser express.raw pour capturer les octets bruts (Buffer/string)
+/**
+ * Endpoint de traitement des webhooks.
+ * Utilise express.raw pour garantir la conservation du corps HTTP brut (Buffer / string) requis pour la signature HMAC.
+ */
 app.post(
   "/webhooks/wave",
   express.raw({ type: "application/json" }),
   async (req, res) => {
     try {
-      // 1. handleWebhook valide la signature HMAC et déduplique l'événement
+      /**
+       * Traitement, validation cryptographique et déduplication de l'événement.
+       */
       const event = await waslPay.handleWebhook(req.body, req.headers);
 
       console.log(`[Webhook Reçu] Event ID: ${event.id}, Statut: ${event.status}`);
 
-      // 2. Mettre à jour votre commande en base de données selon event.status
-      // if (event.status === "success") { markOrderAsPaid(event.reference); }
+      /**
+       * Mise à jour de l'état de la commande métier en fonction de event.status.
+       */
+      if (event.status === "success") {
+        await markOrderAsPaid(event.reference);
+      }
 
       res.status(200).json({ accepted: true, eventId: event.id });
     } catch (error) {
